@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FENCEORA - Quick Start Guide</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 40px 20px;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      padding: 40px;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    h1 {
+      color: #667eea;
+      margin-bottom: 10px;
+      font-size: 2.5rem;
+    }
+    h2 {
+      color: #764ba2;
+      margin-top: 30px;
+      margin-bottom: 15px;
+      font-size: 1.5rem;
+    }
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 1.1rem;
+    }
+    .btn {
+      display: inline-block;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 15px 40px;
+      text-decoration: none;
+      border-radius: 50px;
+      font-weight: bold;
+      margin: 20px 10px 20px 0;
+      transition: transform 0.3s;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+    .btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+    }
+    ul {
+      margin-left: 20px;
+      margin-bottom: 20px;
+    }
+    li {
+      margin-bottom: 10px;
+      line-height: 1.6;
+    }
+    .feature-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin: 20px 0;
+    }
+    .feature-item {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 10px;
+      border-left: 4px solid #667eea;
+    }
+    .code-block {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 20px;
+      border-radius: 10px;
+      overflow-x: auto;
+      margin: 15px 0;
+      font-family: 'Courier New', monospace;
+    }
+    .highlight {
+      color: #667eea;
+      font-weight: bold;
+    }
+    .footer {
+      text-align: center;
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 2px solid #eee;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🚀 FENCEORA Dashboard</h1>
+    <p class="subtitle">Smart Electric Fence Monitoring System - Quick Start Guide</p>
+    
+    <a href="index.html" class="btn">🎯 Launch Dashboard</a>
+    
+    <h2>📋 What's Included</h2>
+    <div class="feature-list">
+      <div class="feature-item">
+        <strong>📄 index.html</strong><br>
+        Main dashboard page
+      </div>
+      <div class="feature-item">
+        <strong>🎨 styles.css</strong><br>
+        All styling & animations
+      </div>
+      <div class="feature-item">
+        <strong>⚙️ script.js</strong><br>
+        Interactive functionality
+      </div>
+      <div class="feature-item">
+        <strong>🔧 config.js</strong><br>
+        Configuration settings
+      </div>
+      <div class="feature-item">
+        <strong>📖 README.md</strong><br>
+        Documentation
+      </div>
+    </div>
+
+    <h2>✨ Key Features</h2>
+    <ul>
+      <li><strong>ESP32 IP Display:</strong> Shows your ESP32's IP address in the left corner</li>
+      <li><strong>Real-Time Monitoring:</strong> Live sensor data updates</li>
+      <li><strong>Responsive Design:</strong> Works on desktop, tablet, and mobile</li>
+      <li><strong>Modern UI:</strong> Beautiful dark theme with glowing effects</li>
+      <li><strong>System Status:</strong> Visual indicators for all components</li>
+      <li><strong>Activity Logs:</strong> Automatic logging of all events</li>
+    </ul>
+
+    <h2>🚀 Quick Start</h2>
+    <p><strong>Option 1: View Locally</strong></p>
+    <ul>
+      <li>Open <span class="highlight">index.html</span> in your web browser</li>
+      <li>The dashboard will run with simulated data</li>
+    </ul>
+
+    <p><strong>Option 2: Deploy to ESP32</strong></p>
+    <ol>
+      <li>Upload all files to your ESP32 web server</li>
+      <li>Configure your ESP32's WiFi settings</li>
+      <li>Access via ESP32's IP address</li>
+      <li>Update <span class="highlight">script.js</span> to fetch real sensor data</li>
+    </ol>
+
+    <h2>🔧 Customization</h2>
+    <p>Edit <strong>config.js</strong> to customize:</p>
+    <div class="code-block">
+const CONFIG = {<br>
+&nbsp;&nbsp;esp32: {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;defaultIP: '192.168.1.100',<br>
+&nbsp;&nbsp;&nbsp;&nbsp;updateInterval: 5000<br>
+&nbsp;&nbsp;},<br>
+&nbsp;&nbsp;sensors: { ... }<br>
+};
+    </div>
+
+    <h2>📱 Sensor Cards</h2>
+    <ul>
+      <li><strong>Proximity Sensor:</strong> Distance detection with visual alerts</li>
+      <li><strong>Temperature:</strong> Real-time temperature and humidity</li>
+      <li><strong>Detection Logs:</strong> Ultrasonic & IR motion events</li>
+      <li><strong>Access Control:</strong> RFID and servo motor activities</li>
+      <li><strong>Power Status:</strong> Battery level and solar power monitoring</li>
+    </ul>
+
+    <h2>💡 Tips</h2>
+    <ul>
+      <li>The dashboard updates automatically - no refresh needed</li>
+      <li>Hover over cards for subtle animations</li>
+      <li>Scroll through logs to see historical events</li>
+      <li>All sensor values simulate real-time changes</li>
+      <li>Responsive design adapts to any screen size</li>
+    </ul>
+
+    <h2>🔗 ESP32 Integration</h2>
+    <p>To connect real sensor data from your ESP32:</p>
+    <ol>
+      <li>Set up your ESP32 web server</li>
+      <li>Create API endpoints for sensor data</li>
+      <li>Update the <span class="highlight">initializeESP32Info()</span> function in script.js</li>
+      <li>Replace simulated data with fetch() calls to your API</li>
+    </ol>
+
+    <h2>📞 Support</h2>
+    <p>For questions or issues, refer to the <strong>README.md</strong> file for detailed documentation.</p>
+
+    <div class="footer">
+      <p><strong>PROJECT DONE BY H^4 HYPERS</strong></p>
+      <p>© 2025 FENCEORA | Smart Electric Fence Node System</p>
+    </div>
+
+    <a href="index.html" class="btn">🎯 Launch Dashboard Now</a>
+  </div>
+</body>
+</html>

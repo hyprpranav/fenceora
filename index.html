@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FENCEORA | Smart Electric Fence Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <div class="esp32-section">
+        <div class="esp32-label">ESP32 IP Address</div>
+        <input type="text" id="esp32IpInput" class="esp32-ip-input" value="" placeholder="Enter IP Address">
+        <div class="ip-button-group">
+          <button id="saveIpBtn" class="save-ip-btn" title="Save IP">
+            <i class="fas fa-check"></i>
+          </button>
+          <button id="editIpBtn" class="edit-ip-btn hidden" title="Edit IP">
+            <i class="fas fa-edit"></i>
+          </button>
+        </div>
+        <div class="connection-status">
+          <div class="connection-dot"></div>
+          <span id="connectionText">Editing...</span>
+        </div>
+      </div>
+      
+      <div class="logo">
+        <div class="logo-icon">⚡</div>
+        <h1>FENCEORA</h1>
+      </div>
+      
+      <div class="header-right">
+        <div class="header-menu">
+          <button class="menu-item" id="aboutBtn" title="About & Help">
+            <i class="fas fa-info-circle"></i>
+            <span class="menu-text">About & Help</span>
+          </button>
+          <button class="menu-item" id="notificationBtn" title="Notifications">
+            <i class="fas fa-bell"></i>
+            <span class="menu-text">Notifications</span>
+            <span class="notification-badge">3</span>
+          </button>
+          <button class="menu-item" id="settingsBtn" title="Settings">
+            <i class="fas fa-cog"></i>
+            <span class="menu-text">Settings</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <div class="dashboard">
+
+      <!-- Card 1: Capacitive Proximity Sensor -->
+      <div class="card">
+        <div class="card-header">
+          <h2>Capacitive Proximity Sensor</h2>
+          <i class="fas fa-hand-paper card-icon"></i>
+        </div>
+        <div class="sensor-value" id="proxValue">12.5 cm</div>
+        <div class="status-badge status-normal" id="proxStatus">Normal Range</div>
+        <div class="sensor-details">
+          <div class="sensor-detail">
+            <div class="detail-label">Detection Range</div>
+            <div class="detail-value">0-50 cm</div>
+          </div>
+          <div class="sensor-detail">
+            <div class="detail-label">Sensitivity</div>
+            <div class="detail-value">High</div>
+          </div>
+          <div class="sensor-detail">
+            <div class="detail-label">Last Update</div>
+            <div class="detail-value" id="proxUpdate">2s ago</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 2: Temperature Sensor -->
+      <div class="card">
+        <div class="card-header">
+          <h2>Temperature Sensor</h2>
+          <i class="fas fa-thermometer-half card-icon"></i>
+        </div>
+        <div class="sensor-value" id="tempValue">28.5°C</div>
+        <div class="status-badge status-normal" id="tempStatus">Optimal</div>
+        <div class="sensor-details">
+          <div class="sensor-detail">
+            <div class="detail-label">Min Temp</div>
+            <div class="detail-value">15°C</div>
+          </div>
+          <div class="sensor-detail">
+            <div class="detail-label">Max Temp</div>
+            <div class="detail-value">40°C</div>
+          </div>
+          <div class="sensor-detail">
+            <div class="detail-label">Humidity</div>
+            <div class="detail-value">65%</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 3: Ultrasonic + IR Detection Log -->
+      <div class="card">
+        <div class="card-header">
+          <h2>Ultrasonic & IR Detection Log</h2>
+          <i class="fas fa-ruler-combined card-icon"></i>
+        </div>
+        <p>Recent detection events:</p>
+        <div class="log-container" id="detectLog">
+          <div class="log-entry">
+            <i class="fas fa-wave-square log-icon"></i>
+            <span class="log-time">14:32:05</span>
+            <span class="log-message">Ultrasonic: Object detected at 2.3m</span>
+          </div>
+          <div class="log-entry">
+            <i class="fas fa-broadcast-tower log-icon"></i>
+            <span class="log-time">14:25:18</span>
+            <span class="log-message">IR Sensor: Motion detected in Zone B</span>
+          </div>
+          <div class="log-entry">
+            <i class="fas fa-wave-square log-icon"></i>
+            <span class="log-time">14:10:42</span>
+            <span class="log-message">Ultrasonic: Object detected at 1.7m</span>
+          </div>
+          <div class="log-entry">
+            <i class="fas fa-broadcast-tower log-icon"></i>
+            <span class="log-time">13:58:33</span>
+            <span class="log-message">IR Sensor: Motion detected in Zone A</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 4: RFID & Servo Motor Log -->
+      <div class="card">
+        <div class="card-header">
+          <h2>RFID & Servo Motor Log</h2>
+          <i class="fas fa-id-card card-icon"></i>
+        </div>
+        <p>Access control events:</p>
+        <div class="log-container" id="rfidLog">
+          <div class="log-entry">
+            <i class="fas fa-id-card log-icon"></i>
+            <span class="log-time">14:35:22</span>
+            <span class="log-message">RFID: Access granted - User #4521</span>
+          </div>
+          <div class="log-entry">
+            <i class="fas fa-cog log-icon"></i>
+            <span class="log-time">14:30:10</span>
+            <span class="log-message">Servo: Gate opened to 90°</span>
+          </div>
+          <div class="log-entry">
+            <i class="fas fa-id-card log-icon"></i>
+            <span class="log-time">14:29:55</span>
+            <span class="log-message">RFID: Card scanned - User #4521</span>
+          </div>
+          <div class="log-entry">
+            <i class="fas fa-cog log-icon"></i>
+            <span class="log-time">14:15:30</span>
+            <span class="log-message">Servo: Gate closed to 0°</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 5: RTC Time & Solar Power -->
+      <div class="card">
+        <div class="card-header">
+          <h2>RTC Time & Solar Power</h2>
+          <i class="fas fa-clock card-icon"></i>
+        </div>
+        <div class="sensor-value" id="rtcTime">14:45:32</div>
+        <div class="detail-value" id="rtcDate">2023-10-15</div>
+        
+        <div class="power-status">
+          <div class="battery-container">
+            <div class="battery">
+              <div class="battery-level" id="batteryLevel"></div>
+            </div>
+            <div>
+              <div class="solar-text" id="batteryText">Battery: 85%</div>
+              <div class="detail-label">Solar Input: 18.7V</div>
+            </div>
+          </div>
+          <div class="solar-container">
+            <i class="fas fa-solar-panel solar-icon"></i>
+            <div>
+              <div class="solar-text">Active Supply</div>
+              <div class="detail-label">5.2A / 98W</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="extra-info">
+          <p>System Uptime: <span id="uptime">5 days, 12:23:15</span></p>
+          <p>Last Sync: <span id="lastSync">2023-10-15 14:30:00</span></p>
+        </div>
+      </div>
+
+      <!-- Graph Card: Real-Time Sensor Data -->
+      <div class="card graph-card">
+        <div class="card-header">
+          <h2>Real-Time Sensor Data</h2>
+          <i class="fas fa-chart-line card-icon"></i>
+        </div>
+        <div class="graph-container">
+          <canvas id="sensorChart"></canvas>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="footer">
+      <div class="footer-content">
+        <div class="footer-section">
+          <p class="footer-text">PROJECT DONE BY H^4 HYPERS</p>
+          <p class="footer-subtext">© 2025 FENCEORA | Smart Electric Fence Node System</p>
+        </div>
+        <div class="footer-section">
+          <p class="footer-guided-title">GUIDED BY:</p>
+          <p class="footer-guided-name">DR.T SENTHIL KUMAR</p>
+          <p class="footer-guided-name">DR.G.SANMUGAVADIVEL</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- About & Help Modal -->
+  <div id="aboutModal" class="modal">
+    <div class="modal-content modal-large">
+      <div class="modal-header">
+        <h2><i class="fas fa-info-circle"></i> About & Help</h2>
+        <button class="modal-close" id="closeAbout">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="about-tabs">
+          <button class="tab-btn active" data-tab="about">About FENCEORA</button>
+          <button class="tab-btn" data-tab="help">Help & Guidance</button>
+        </div>
+
+        <div id="about-tab" class="tab-content active">
+          <h3>About FENCEORA</h3>
+          <p><strong>FENCEORA</strong> is an advanced Smart Electric Fence Monitoring and Control System powered by ESP32 technology.</p>
+          
+          <h4>Key Features:</h4>
+          <ul>
+            <li><strong>Real-Time Monitoring:</strong> Track all sensors and system status in real-time</li>
+            <li><strong>Multiple Sensors:</strong> Capacitive proximity, temperature, ultrasonic, IR, and RFID integration</li>
+            <li><strong>Solar Powered:</strong> Eco-friendly power management with battery backup</li>
+            <li><strong>Access Control:</strong> RFID-based authentication and servo motor control</li>
+            <li><strong>Remote Management:</strong> Control and monitor from anywhere via web interface</li>
+            <li><strong>Event Logging:</strong> Comprehensive logging of all detection and access events</li>
+          </ul>
+
+          <h4>System Specifications:</h4>
+          <div class="specs-grid-modal">
+            <div class="spec-item-modal">
+              <i class="fas fa-microchip"></i>
+              <strong>Controller:</strong> ESP32
+            </div>
+            <div class="spec-item-modal">
+              <i class="fas fa-solar-panel"></i>
+              <strong>Power:</strong> Solar + Battery
+            </div>
+            <div class="spec-item-modal">
+              <i class="fas fa-wifi"></i>
+              <strong>Connectivity:</strong> WiFi
+            </div>
+            <div class="spec-item-modal">
+              <i class="fas fa-sensor"></i>
+              <strong>Sensors:</strong> 5+ Types
+            </div>
+          </div>
+        </div>
+
+        <div id="help-tab" class="tab-content">
+          <h3>Help & Guidance</h3>
+          
+          <h4>Getting Started:</h4>
+          <ol>
+            <li><strong>Connect to ESP32:</strong> Enter your ESP32's IP address in the left corner</li>
+            <li><strong>Monitor Sensors:</strong> View real-time data from all connected sensors on the dashboard</li>
+            <li><strong>Check Logs:</strong> Review detection and access control events in the log sections</li>
+            <li><strong>System Status:</strong> Monitor battery levels and solar power input</li>
+          </ol>
+
+          <h4>Common Tasks:</h4>
+          <div class="help-task-modal">
+            <h5><i class="fas fa-edit"></i> Changing IP Address:</h5>
+            <p>Enter IP in the field → Click save (checkmark) or press Enter</p>
+          </div>
+
+          <div class="help-task-modal">
+            <h5><i class="fas fa-eye"></i> Reading Sensor Data:</h5>
+            <p>Each card displays the current sensor value, status, and additional details. Color-coded badges indicate system health.</p>
+          </div>
+
+          <div class="help-task-modal">
+            <h5><i class="fas fa-list"></i> Understanding Logs:</h5>
+            <p>Log entries show timestamp, sensor type, and event details. Most recent events appear at the top.</p>
+          </div>
+
+          <h4>Troubleshooting:</h4>
+          <ul>
+            <li><strong>Can't connect to ESP32:</strong> Verify IP address and ensure ESP32 is powered on and connected to WiFi</li>
+            <li><strong>No sensor updates:</strong> Check ESP32 connection and refresh the page</li>
+            <li><strong>Incorrect time:</strong> System uses your local time zone automatically</li>
+          </ul>
+
+          <div class="help-contact">
+            <h4>Need More Help?</h4>
+            <p><strong>Development Team:</strong> H^4 HYPERS</p>
+            <p><i class="fas fa-envelope"></i> Email: support@fenceora.com</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notification Modal -->
+  <div id="notificationModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2><i class="fas fa-bell"></i> Notifications</h2>
+        <button class="modal-close" id="closeNotification">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="notification-item unread">
+          <div class="notification-icon alert">
+            <i class="fas fa-exclamation-triangle"></i>
+          </div>
+          <div class="notification-content">
+            <h4>Proximity Alert</h4>
+            <p>Object detected too close at Zone A</p>
+            <span class="notification-time">2 minutes ago</span>
+          </div>
+        </div>
+        <div class="notification-item unread">
+          <div class="notification-icon warning">
+            <i class="fas fa-temperature-high"></i>
+          </div>
+          <div class="notification-content">
+            <h4>Temperature Warning</h4>
+            <p>Temperature elevated to 32°C</p>
+            <span class="notification-time">15 minutes ago</span>
+          </div>
+        </div>
+        <div class="notification-item unread">
+          <div class="notification-icon success">
+            <i class="fas fa-check-circle"></i>
+          </div>
+          <div class="notification-content">
+            <h4>System Update</h4>
+            <p>All sensors functioning normally</p>
+            <span class="notification-time">1 hour ago</span>
+          </div>
+        </div>
+        <div class="notification-item">
+          <div class="notification-icon info">
+            <i class="fas fa-info-circle"></i>
+          </div>
+          <div class="notification-content">
+            <h4>Battery Status</h4>
+            <p>Battery charged to 85%</p>
+            <span class="notification-time">3 hours ago</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div id="settingsModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2><i class="fas fa-cog"></i> Settings</h2>
+        <button class="modal-close" id="closeSettings">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="settings-section">
+          <h3>Display Settings</h3>
+          <div class="setting-item">
+            <label for="refreshRate">Data Refresh Rate:</label>
+            <select id="refreshRate">
+              <option value="3000">3 seconds</option>
+              <option value="5000" selected>5 seconds</option>
+              <option value="10000">10 seconds</option>
+            </select>
+          </div>
+          <div class="setting-item">
+            <label for="theme">Theme:</label>
+            <select id="theme">
+              <option value="dark" selected>Dark Mode</option>
+              <option value="light">Light Mode</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h3>Notification Settings</h3>
+          <div class="setting-item checkbox">
+            <input type="checkbox" id="enableNotifications" checked>
+            <label for="enableNotifications">Enable Notifications</label>
+          </div>
+          <div class="setting-item checkbox">
+            <input type="checkbox" id="soundAlerts" checked>
+            <label for="soundAlerts">Sound Alerts</label>
+          </div>
+          <div class="setting-item checkbox">
+            <input type="checkbox" id="emailNotifications">
+            <label for="emailNotifications">Email Notifications</label>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h3>System Settings</h3>
+          <div class="setting-item">
+            <label for="timeFormat">Time Format:</label>
+            <select id="timeFormat">
+              <option value="12">12 Hour</option>
+              <option value="24" selected>24 Hour</option>
+            </select>
+          </div>
+          <div class="setting-item">
+            <label for="tempUnit">Temperature Unit:</label>
+            <select id="tempUnit">
+              <option value="C" selected>Celsius (°C)</option>
+              <option value="F">Fahrenheit (°F)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="settings-actions">
+          <button class="btn-save"><i class="fas fa-save"></i> Save Settings</button>
+          <button class="btn-reset"><i class="fas fa-undo"></i> Reset to Default</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
