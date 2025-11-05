@@ -397,10 +397,16 @@ function initializeModals() {
   });
 }
 
-// Settings functionality (Unchanged)
+// Settings functionality with Theme Toggle
 function initializeSettings() {
   const saveBtn = document.querySelector('.btn-save');
   const resetBtn = document.querySelector('.btn-reset');
+  const themeSelect = document.getElementById('theme');
+
+  // Apply theme immediately on change
+  themeSelect.addEventListener('change', function() {
+    applyTheme(this.value);
+  });
 
   saveBtn.addEventListener('click', function() {
     // Get all settings values
@@ -416,6 +422,9 @@ function initializeSettings() {
 
     // Save to localStorage
     localStorage.setItem('fenceora_settings', JSON.stringify(settings));
+    
+    // Apply the selected theme
+    applyTheme(settings.theme);
 
     // Show success feedback
     saveBtn.innerHTML = '<i class="fas fa-check"></i> Saved!';
@@ -431,6 +440,7 @@ function initializeSettings() {
   resetBtn.addEventListener('click', function() {
     if (confirm('Reset all settings to default?')) {
       localStorage.removeItem('fenceora_settings');
+      document.body.classList.remove('light-theme');
       location.reload();
     }
   });
@@ -446,6 +456,18 @@ function initializeSettings() {
     document.getElementById('emailNotifications').checked = settings.emailNotifications || false;
     document.getElementById('timeFormat').value = settings.timeFormat || '24';
     document.getElementById('tempUnit').value = settings.tempUnit || 'C';
+    
+    // Apply saved theme on load
+    applyTheme(settings.theme);
+  }
+}
+
+// Apply theme function
+function applyTheme(theme) {
+  if (theme === 'light') {
+    document.body.classList.add('light-theme');
+  } else {
+    document.body.classList.remove('light-theme');
   }
 }
 

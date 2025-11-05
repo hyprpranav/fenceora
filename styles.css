@@ -1230,3 +1230,542 @@ h1 {
     grid-template-columns: 1fr;
   }
 }
+
+/* Download PDF Button */
+.download-section {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.btn-download-pdf {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 28px;
+  background: linear-gradient(135deg, var(--danger), #ff6b7a);
+  color: white;
+  text-decoration: none;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 1.05rem;
+  transition: all 0.3s;
+  border: 2px solid transparent;
+  box-shadow: 0 4px 15px rgba(255, 71, 87, 0.3);
+}
+
+.btn-download-pdf:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(255, 71, 87, 0.5);
+  border-color: var(--danger);
+  background: linear-gradient(135deg, #ff6b7a, var(--danger));
+}
+
+.btn-download-pdf:active {
+  transform: translateY(-1px);
+}
+
+.btn-download-pdf i {
+  font-size: 1.3rem;
+}
+
+/* ============================================ */
+/* LIGHT THEME - High Gradient Premium Design */
+/* ============================================ */
+
+body.light-theme {
+  --primary: #0066ff;
+  --secondary: #00c896;
+  --danger: #ff4757;
+  --warning: #ffa500;
+  --dark-bg: #f5f7fa;
+  --card-bg: #ffffff;
+  --text: #2c3e50;
+  --border: #e1e8ed;
+  
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #4facfe 75%, #00f2fe 100%);
+  background-size: 400% 400%;
+  animation: gradientShift 15s ease infinite;
+  color: var(--text);
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+body.light-theme::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 20% 50%, rgba(102, 126, 234, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(244, 144, 251, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 40% 20%, rgba(79, 172, 254, 0.1) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+body.light-theme header {
+  background: rgba(255, 255, 255, 0.95);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  border-bottom: 2px solid rgba(102, 126, 234, 0.2);
+  box-shadow: 0 8px 32px rgba(102, 126, 234, 0.1);
+}
+
+body.light-theme h1 {
+  color: #667eea;
+  text-shadow: 0 2px 20px rgba(102, 126, 234, 0.3);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+body.light-theme .logo-icon {
+  color: #667eea;
+  text-shadow: 0 0 30px rgba(102, 126, 234, 0.5);
+}
+
+@keyframes glowLight {
+  0%, 100% { 
+    text-shadow: 0 0 20px rgba(102, 126, 234, 0.5), 0 0 30px rgba(102, 126, 234, 0.3); 
+    filter: drop-shadow(0 0 20px rgba(102, 126, 234, 0.4));
+  }
+  50% { 
+    text-shadow: 0 0 30px rgba(102, 126, 234, 0.7), 0 0 40px rgba(102, 126, 234, 0.5), 0 0 50px rgba(102, 126, 234, 0.3);
+    filter: drop-shadow(0 0 30px rgba(102, 126, 234, 0.6));
+  }
+}
+
+body.light-theme .logo-icon {
+  animation: glowLight 2s ease-in-out infinite;
+}
+
+body.light-theme .esp32-section {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.85) 100%);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  border: 2px solid rgba(102, 126, 234, 0.3);
+  box-shadow: 0 8px 32px rgba(102, 126, 234, 0.15);
+}
+
+body.light-theme .esp32-label {
+  color: #7f8c8d;
+}
+
+body.light-theme .esp32-ip,
+body.light-theme .esp32-ip-input {
+  color: #00c896;
+  text-shadow: 0 0 10px rgba(0, 200, 150, 0.3);
+}
+
+body.light-theme .esp32-ip-input {
+  background: rgba(102, 126, 234, 0.05);
+  border: 2px solid rgba(102, 126, 234, 0.3);
+}
+
+body.light-theme .esp32-ip-input:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
+  background: rgba(102, 126, 234, 0.1);
+}
+
+body.light-theme .edit-ip-btn,
+body.light-theme .save-ip-btn {
+  background: rgba(102, 126, 234, 0.1);
+  border: 2px solid #667eea;
+  color: #667eea;
+}
+
+body.light-theme .edit-ip-btn:hover,
+body.light-theme .save-ip-btn:hover {
+  background: rgba(102, 126, 234, 0.2);
+  box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+}
+
+body.light-theme .save-ip-btn {
+  border-color: #00c896;
+  color: #00c896;
+  background: rgba(0, 200, 150, 0.1);
+}
+
+body.light-theme .save-ip-btn:hover {
+  background: rgba(0, 200, 150, 0.2);
+  box-shadow: 0 5px 20px rgba(0, 200, 150, 0.4);
+}
+
+body.light-theme .connection-dot {
+  box-shadow: 0 0 15px currentColor;
+}
+
+body.light-theme .menu-item {
+  background: rgba(102, 126, 234, 0.1);
+  border: 2px solid rgba(102, 126, 234, 0.3);
+  color: #667eea;
+}
+
+body.light-theme .menu-item:hover {
+  background: rgba(102, 126, 234, 0.2);
+  box-shadow: 0 5px 20px rgba(102, 126, 234, 0.3);
+  transform: translateY(-3px);
+}
+
+body.light-theme .card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.9) 100%);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  border: 2px solid rgba(102, 126, 234, 0.2);
+  box-shadow: 0 10px 40px rgba(102, 126, 234, 0.1);
+}
+
+body.light-theme .card::before {
+  background: linear-gradient(90deg, #667eea, #764ba2, #f093fb);
+  height: 5px;
+}
+
+body.light-theme .card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 15px 50px rgba(102, 126, 234, 0.25);
+  border-color: rgba(102, 126, 234, 0.4);
+}
+
+body.light-theme .card h2 {
+  color: #667eea;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+body.light-theme .card-icon {
+  color: #667eea;
+}
+
+body.light-theme .sensor-value {
+  color: #00c896;
+  text-shadow: 0 0 15px rgba(0, 200, 150, 0.3);
+  background: linear-gradient(135deg, #00c896 0%, #00f2a1 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+body.light-theme .detail-label {
+  color: #7f8c8d;
+}
+
+body.light-theme .detail-value {
+  color: #2c3e50;
+  font-weight: 700;
+}
+
+body.light-theme .status-normal {
+  background: linear-gradient(135deg, rgba(0, 200, 150, 0.15) 0%, rgba(0, 242, 161, 0.15) 100%);
+  color: #00a878;
+  border: 1px solid rgba(0, 200, 150, 0.3);
+}
+
+body.light-theme .status-warning {
+  background: linear-gradient(135deg, rgba(255, 165, 0, 0.15) 0%, rgba(255, 193, 7, 0.15) 100%);
+  color: #ff8c00;
+  border: 1px solid rgba(255, 165, 0, 0.3);
+}
+
+body.light-theme .status-alert {
+  background: linear-gradient(135deg, rgba(255, 71, 87, 0.15) 0%, rgba(255, 107, 107, 0.15) 100%);
+  color: #e63946;
+  border: 1px solid rgba(255, 71, 87, 0.3);
+}
+
+body.light-theme .log-container {
+  background: rgba(102, 126, 234, 0.05);
+  border: 2px solid rgba(102, 126, 234, 0.15);
+}
+
+body.light-theme .log-entry {
+  border-bottom: 1px solid rgba(102, 126, 234, 0.15);
+}
+
+body.light-theme .log-time {
+  color: #667eea;
+  font-weight: 700;
+}
+
+body.light-theme .log-message {
+  color: #2c3e50;
+}
+
+body.light-theme .log-icon {
+  color: #00c896;
+}
+
+body.light-theme .power-status {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%);
+  border: 2px solid rgba(102, 126, 234, 0.2);
+}
+
+body.light-theme .battery {
+  border: 3px solid #667eea;
+}
+
+body.light-theme .battery::after {
+  background: #667eea;
+}
+
+body.light-theme .battery-level {
+  background: linear-gradient(90deg, #667eea, #764ba2, #00c896);
+}
+
+body.light-theme .solar-icon {
+  color: #ffa500;
+  filter: drop-shadow(0 0 10px rgba(255, 165, 0, 0.5));
+}
+
+body.light-theme .solar-text {
+  color: #2c3e50;
+  font-weight: 700;
+}
+
+body.light-theme .graph-container {
+  background: rgba(255, 255, 255, 0.7);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(102, 126, 234, 0.2);
+  box-shadow: inset 0 2px 20px rgba(102, 126, 234, 0.05);
+}
+
+body.light-theme .footer {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.6) 100%);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  border-top: 2px solid rgba(102, 126, 234, 0.2);
+}
+
+body.light-theme .footer-text {
+  color: #667eea;
+  text-shadow: 0 0 15px rgba(102, 126, 234, 0.3);
+}
+
+body.light-theme .footer-guided-title {
+  color: #00c896;
+  text-shadow: 0 0 15px rgba(0, 200, 150, 0.3);
+}
+
+body.light-theme .footer-guided-name,
+body.light-theme .footer-subtext {
+  color: #2c3e50;
+}
+
+/* Modal Styles for Light Theme */
+body.light-theme .modal {
+  background-color: rgba(102, 126, 234, 0.4);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+body.light-theme .modal-content {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.95) 100%);
+  -webkit-backdrop-filter: blur(30px);
+  backdrop-filter: blur(30px);
+  border: 2px solid rgba(102, 126, 234, 0.3);
+  box-shadow: 0 20px 80px rgba(102, 126, 234, 0.3);
+}
+
+body.light-theme .modal-header {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.12) 0%, rgba(244, 144, 251, 0.12) 100%);
+  border-bottom: 2px solid rgba(102, 126, 234, 0.2);
+}
+
+body.light-theme .modal-header h2 {
+  color: #667eea;
+}
+
+body.light-theme .modal-close {
+  color: #667eea;
+}
+
+body.light-theme .modal-close:hover {
+  background: rgba(255, 71, 87, 0.15);
+  color: #ff4757;
+}
+
+body.light-theme .tab-btn {
+  color: #7f8c8d;
+}
+
+body.light-theme .tab-btn:hover {
+  color: #667eea;
+}
+
+body.light-theme .tab-btn.active {
+  color: #667eea;
+  border-bottom-color: #667eea;
+}
+
+body.light-theme .tab-content h3 {
+  color: #667eea;
+}
+
+body.light-theme .tab-content h4 {
+  color: #00c896;
+}
+
+body.light-theme .tab-content p,
+body.light-theme .tab-content li {
+  color: #2c3e50;
+}
+
+body.light-theme .specs-grid-modal {
+  gap: 18px;
+}
+
+body.light-theme .spec-item-modal {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%);
+  border: 2px solid rgba(102, 126, 234, 0.25);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.1);
+}
+
+body.light-theme .spec-item-modal i {
+  color: #667eea;
+}
+
+body.light-theme .spec-item-modal strong {
+  color: #00c896;
+}
+
+body.light-theme .help-task-modal {
+  background: linear-gradient(135deg, rgba(0, 200, 150, 0.08) 0%, rgba(0, 242, 161, 0.08) 100%);
+  border-left: 4px solid #00c896;
+}
+
+body.light-theme .help-task-modal i {
+  color: #00c896;
+}
+
+body.light-theme .help-contact {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%);
+  border: 2px solid rgba(102, 126, 234, 0.3);
+}
+
+body.light-theme .help-contact i {
+  color: #667eea;
+}
+
+/* Notification Styles for Light Theme */
+body.light-theme .notification-item {
+  background: rgba(102, 126, 234, 0.05);
+  border: 1px solid rgba(102, 126, 234, 0.15);
+}
+
+body.light-theme .notification-item:hover {
+  background: rgba(102, 126, 234, 0.1);
+}
+
+body.light-theme .notification-item.unread {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.12) 0%, rgba(118, 75, 162, 0.12) 100%);
+  border-color: rgba(102, 126, 234, 0.3);
+}
+
+body.light-theme .notification-content h4 {
+  color: #667eea;
+}
+
+body.light-theme .notification-content p {
+  color: #2c3e50;
+}
+
+body.light-theme .notification-time {
+  color: #7f8c8d;
+}
+
+/* Settings Styles for Light Theme */
+body.light-theme .settings-section {
+  border-bottom: 1px solid rgba(102, 126, 234, 0.2);
+}
+
+body.light-theme .settings-section h3 {
+  color: #00c896;
+}
+
+body.light-theme .setting-item {
+  background: rgba(102, 126, 234, 0.05);
+  border-radius: 10px;
+}
+
+body.light-theme .setting-item.checkbox:hover {
+  background: rgba(102, 126, 234, 0.12);
+}
+
+body.light-theme .setting-item label {
+  color: #2c3e50;
+  font-weight: 600;
+}
+
+body.light-theme .setting-item select {
+  background: rgba(255, 255, 255, 0.9);
+  color: #667eea;
+  border: 2px solid rgba(102, 126, 234, 0.3);
+  font-weight: 600;
+}
+
+body.light-theme .setting-item select:hover {
+  border-color: #667eea;
+}
+
+body.light-theme .btn-save {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+}
+
+body.light-theme .btn-save:hover {
+  box-shadow: 0 8px 30px rgba(102, 126, 234, 0.5);
+}
+
+body.light-theme .btn-reset {
+  background: rgba(255, 71, 87, 0.1);
+  border: 2px solid #ff4757;
+  color: #ff4757;
+}
+
+body.light-theme .btn-reset:hover {
+  background: rgba(255, 71, 87, 0.2);
+}
+
+/* Download Button Light Theme */
+body.light-theme .btn-download-pdf {
+  background: linear-gradient(135deg, #ff4757, #ff6b7a);
+  box-shadow: 0 5px 25px rgba(255, 71, 87, 0.4);
+}
+
+body.light-theme .btn-download-pdf:hover {
+  box-shadow: 0 10px 40px rgba(255, 71, 87, 0.6);
+}
+
+/* Scrollbar Light Theme */
+body.light-theme .log-container::-webkit-scrollbar-track {
+  background: rgba(102, 126, 234, 0.1);
+}
+
+body.light-theme .log-container::-webkit-scrollbar-thumb {
+  background: #667eea;
+  box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
+}
+
+body.light-theme .log-container::-webkit-scrollbar-thumb:hover {
+  background: #764ba2;
+}
+
+body.light-theme .modal-body::-webkit-scrollbar-track {
+  background: rgba(102, 126, 234, 0.05);
+}
+
+body.light-theme .modal-body::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+}
