@@ -10,10 +10,28 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="styles.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+  <script src="email-config.js"></script>
+  <script src="email-sender.js"></script>
 </head>
 <body>
 
   <div class="container">
+    <!-- Critical Warning Overlay (Hidden by default) -->
+    <div id="criticalWarningOverlay" class="critical-warning-overlay hidden">
+      <div class="critical-warning-box">
+        <div class="warning-icon-large">
+          <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <h1 class="warning-title" id="warningTitle">⚠️ CRITICAL ALERT</h1>
+        <p class="warning-message" id="warningMessage">Fence Current Detected!</p>
+        <p class="warning-details" id="warningDetails">Time: 14:35:22 | Location: Perimeter Zone</p>
+        <button class="warning-dismiss-btn" onclick="dismissWarning()">
+          <i class="fas fa-times"></i> DISMISS
+        </button>
+      </div>
+    </div>
+
     <header>
       <div class="esp32-section">
         <div class="esp32-label">ESP32 IP Address</div>
@@ -322,7 +340,7 @@
           <div class="help-contact">
             <h4>Need More Help?</h4>
             <p><strong>Development Team:</strong> H^4 HYPERS</p>
-            <p><i class="fas fa-envelope"></i> Email: support@fenceora.com</p>
+            <p><i class="fas fa-envelope"></i> Email: fenceora.h4@gmail.com</p>
           </div>
         </div>
       </div>
@@ -419,8 +437,29 @@
             <label for="soundAlerts">Sound Alerts</label>
           </div>
           <div class="setting-item checkbox">
-            <input type="checkbox" id="emailNotifications">
+            <input type="checkbox" id="emailNotifications" checked>
             <label for="emailNotifications">Email Notifications</label>
+          </div>
+          
+          <!-- Email Test Section -->
+          <div class="email-test-section" id="emailTestSection">
+            <div class="email-test-header">
+              <i class="fas fa-envelope-open-text"></i>
+              <h4>Test Email Notification</h4>
+            </div>
+            <p class="email-test-description">Test the email notification system independently. Click the button below to send a test email to all receivers. No ESP32 connection required! Available every 30 seconds.</p>
+            <button class="btn-test-email" id="testEmailBtn">
+              <i class="fas fa-paper-plane"></i>
+              <span id="testEmailText">Send Test Email</span>
+            </button>
+            <div class="email-test-timer" id="emailTestTimer">
+              <i class="fas fa-clock"></i>
+              <span>Next test available in: <strong id="timerCountdown">30</strong> seconds</span>
+            </div>
+            <div class="email-test-status" id="emailTestStatus">
+              <i class="fas fa-check-circle"></i>
+              <span id="emailStatusText">Test email sent successfully!</span>
+            </div>
           </div>
         </div>
 
@@ -438,6 +477,13 @@
             <select id="tempUnit">
               <option value="C" selected>Celsius (°C)</option>
               <option value="F">Fahrenheit (°F)</option>
+            </select>
+          </div>
+          <div class="setting-item">
+            <label for="language">Language:</label>
+            <select id="language">
+              <option value="en" selected>English</option>
+              <option value="ta">தமிழ் (Tamil)</option>
             </select>
           </div>
         </div>

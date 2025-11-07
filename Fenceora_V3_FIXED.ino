@@ -36,9 +36,35 @@
 // --- 4. Other Actuators/Sensors ---
 #include <ESP32Servo.h>          // For Servo
 
+// --- 5. Email Notifications (ESP Mail Client) ---
+#include <ESP_Mail_Client.h>     // For sending email alerts
+
 // === WiFi Credentials ===
 const char* ssid = "Oppo A77s";
 const char* password = "9080061674";
+
+// === Email Configuration (Gmail SMTP) ===
+// SENDER EMAIL (Your Gmail account that sends notifications)
+#define SMTP_HOST "smtp.gmail.com"
+#define SMTP_PORT 465  // SSL port
+#define SENDER_EMAIL "fenceora.h4@gmail.com"
+#define SENDER_PASSWORD "rflnubdzhetlxymt"  // Gmail App Password (spaces removed)
+#define SENDER_NAME "Fenceora Alert System"
+
+// RECEIVER EMAILS (People who will receive notifications)
+const char* receiverEmails[] = {
+  "harishpranavs259@gmail.com",      // Receiver 1
+  "hariprasanthgk1@gmail.com",       // Receiver 2
+  "hemanathan8337@gmail.com",        // Receiver 3
+  "harishwarharishwar47@gmail.com"   // Receiver 4
+};
+const int numReceivers = 4;
+
+// Email sending state
+SMTPSession smtp;
+bool emailInitialized = false;
+unsigned long lastEmailTime = 0;
+const unsigned long EMAIL_COOLDOWN = 30000; // 30 seconds between emails (prevent spam)
 
 // === Pin Definitions ===
 // I2C (for RTC and MPU6050)
@@ -128,7 +154,7 @@ unsigned long lastRfidScan = 0;
 // === RFID Authorized Card UID ===
 // !! IMPORTANT: REPLACE these four bytes with your card's UID.
 // Use the RFID_UID_Reader.ino sketch to find your card's UID.
-byte authorizedUID[4] = {0xDE, 0xAD, 0xBE, 0xEF}; // CHANGE THIS!
+byte authorizedUID[4] = {0xD3, 0x2E, 0xE4, 0x2C}; // YOUR ACTUAL CARD UID!
 
 // =================================================================
 // ===           LOGGING FUNCTIONS                               ===
@@ -292,6 +318,15 @@ void readAllSensors() {
           // No hand, no movement = must be fence
           fenceActive = true;
           addDetectLog("fa-bolt", "⚡ FENCE ELECTRIC FIELD DETECTED!");
+          
+          // Send email notification for fence current
+          char voltageStr[20];
+          sprintf(voltageStr, "%.2fV", solarVoltage);
+          sendEmailNotification(
+            "Fence Current Detected",
+            "Electric field detected on perimeter fence!",
+            String("Voltage: ") + voltageStr + " | Sensor: Capacitive"
+          );
         }
       } else {
         // Sensor went LOW - field cleared
@@ -309,6 +344,13 @@ void readAllSensors() {
     tamperIR = currentIRState;
     if (tamperIR) {
       addDetectLog("fa-hand-paper", "⚠️ ALERT: Someone tried to hold/tamper with product!");
+      
+      // Send email notification for tampering
+      sendEmailNotification(
+        "Tampering Detected",
+        "Hand or object detected near device!",
+        "Sensor: Infrared (IR) | Someone is trying to tamper with the fence system"
+      );
     }
   }
 
@@ -333,6 +375,16 @@ void readAllSensors() {
     if (abs(a.acceleration.x) > 15 || abs(a.acceleration.y) > 15 || abs(a.acceleration.z) > 15) {
       if (!tamperMotion) {
         addDetectLog("fa-exclamation-triangle", "MOTION TAMPER DETECTED!");
+        
+        // Send email notification for device movement
+        char accelStr[50];
+        sprintf(accelStr, "X:%.1f Y:%.1f Z:%.1f m/s²", 
+                a.acceleration.x, a.acceleration.y, a.acceleration.z);
+        sendEmailNotification(
+          "Device Movement Detected",
+          "Someone is trying to move the fence system device!",
+          String("Sensor: MPU6050 Accelerometer | ") + accelStr
+        );
       }
       tamperMotion = true;
     } else {
@@ -427,16 +479,24 @@ void handleRfid() {
     // Authorized card detected - Toggle servo
     if (!isServoOpen) {
       // Open servo
-      Serial.println("✓ Authorized Card - Opening Servo");
+      Serial.println("✓ Authorized Card - Opening Servo to 90°");
       addRfidLog("fa-unlock", "✓ Authorized Card - UNLOCKING...");
-      lockServo.write(90); // Open position
+      for (int pos = 0; pos <= 90; pos += 5) {
+        lockServo.write(pos);
+        delay(15); // Smooth movement
+      }
       isServoOpen = true;
+      Serial.println("Servo is now OPEN (90°)");
     } else {
       // Close servo
-      Serial.println("✓ Authorized Card - Closing Servo");
+      Serial.println("✓ Authorized Card - Closing Servo to 0°");
       addRfidLog("fa-lock", "✓ Authorized Card - LOCKING...");
-      lockServo.write(0); // Closed position
+      for (int pos = 90; pos >= 0; pos -= 5) {
+        lockServo.write(pos);
+        delay(15); // Smooth movement
+      }
       isServoOpen = false;
+      Serial.println("Servo is now CLOSED (0°)");
     }
   } else {
     // Unauthorized card
@@ -448,11 +508,115 @@ void handleRfid() {
     Serial.println();
     Serial.println("Update authorizedUID[] in code with correct UID!");
     addRfidLog("fa-times-circle", "✗ UNAUTHORIZED Card! Access DENIED.");
+    
+    // Send email notification for unauthorized access
+    char uidStr[20];
+    sprintf(uidStr, "%02X %02X %02X %02X", 
+            rfid.uid.uidByte[0], rfid.uid.uidByte[1], 
+            rfid.uid.uidByte[2], rfid.uid.uidByte[3]);
+    sendEmailNotification(
+      "Unauthorized RFID Access Attempt",
+      "Unknown RFID card was scanned at the fence lock!",
+      String("Card UID: ") + uidStr + " | Access DENIED"
+    );
   }
 
   // Halt PICC and stop encryption
   rfid.PICC_HaltA();
   rfid.PCD_StopCrypto1();
+}
+
+// =================================================================
+// ===           EMAIL NOTIFICATION SYSTEM                     ===
+// =================================================================
+
+/**
+ * Sends email notification to all configured receivers
+ * @param alertTitle - Main alert title (e.g., "Fence Current Detected")
+ * @param alertMessage - Alert message body
+ * @param alertDetails - Additional details (voltage, sensor, etc.)
+ */
+void sendEmailNotification(String alertTitle, String alertMessage, String alertDetails) {
+  // Check cooldown period to prevent email spam
+  unsigned long currentTime = millis();
+  if (currentTime - lastEmailTime < EMAIL_COOLDOWN) {
+    Serial.println("⏳ Email cooldown active. Skipping email.");
+    return;
+  }
+  
+  // Check if password is configured
+  if (String(SENDER_PASSWORD) == "YOUR_GMAIL_APP_PASSWORD") {
+    Serial.println("⚠️ Email notifications not configured!");
+    Serial.println("📧 Please set SENDER_PASSWORD in code (see instructions in comments)");
+    return;
+  }
+  
+  Serial.println("\n📧 Sending email notification...");
+  
+  // Configure SMTP session
+  ESP_Mail_Session session;
+  session.server.host_name = SMTP_HOST;
+  session.server.port = SMTP_PORT;
+  session.login.email = SENDER_EMAIL;
+  session.login.password = SENDER_PASSWORD;
+  session.login.user_domain = "";
+  
+  // Create email message
+  SMTP_Message message;
+  message.sender.name = SENDER_NAME;
+  message.sender.email = SENDER_EMAIL;
+  message.subject = "🚨 FENCEORA ALERT: " + alertTitle;
+  message.priority = esp_mail_smtp_priority::esp_mail_smtp_priority_high;
+  
+  // Add all receivers
+  for (int i = 0; i < numReceivers; i++) {
+    message.addRecipient("Receiver", receiverEmails[i]);
+    Serial.printf("   → Adding receiver: %s\n", receiverEmails[i]);
+  }
+  
+  // Get current time
+  DateTime now = rtc.now();
+  char timestamp[30];
+  sprintf(timestamp, "%04d-%02d-%02d %02d:%02d:%02d", 
+          now.year(), now.month(), now.day(), 
+          now.hour(), now.minute(), now.second());
+  
+  // Build HTML email body
+  String htmlMsg = "<html><body style='font-family: Arial, sans-serif;'>";
+  htmlMsg += "<div style='background: linear-gradient(135deg, #ff4757, #ff6348); padding: 30px; text-align: center; color: white;'>";
+  htmlMsg += "<h1 style='margin: 0; font-size: 36px;'>⚠️ CRITICAL ALERT</h1>";
+  htmlMsg += "</div>";
+  htmlMsg += "<div style='padding: 20px; background: #f5f5f5;'>";
+  htmlMsg += "<h2 style='color: #ff4757;'>" + alertTitle + "</h2>";
+  htmlMsg += "<p style='font-size: 18px; color: #333;'><strong>Message:</strong> " + alertMessage + "</p>";
+  htmlMsg += "<p style='font-size: 16px; color: #666;'><strong>Details:</strong> " + alertDetails + "</p>";
+  htmlMsg += "<p style='font-size: 14px; color: #999;'><strong>Timestamp:</strong> " + String(timestamp) + "</p>";
+  htmlMsg += "<hr style='border: 1px solid #ddd; margin: 20px 0;'>";
+  htmlMsg += "<p style='font-size: 14px; color: #666;'>Please check your Fenceora dashboard immediately.</p>";
+  htmlMsg += "<p style='font-size: 12px; color: #999;'>This is an automated alert from your Fenceora Smart Fence System.</p>";
+  htmlMsg += "</div></body></html>";
+  
+  message.html.content = htmlMsg.c_str();
+  message.html.charSet = "utf-8";
+  message.html.transfer_encoding = Content_Transfer_Encoding::enc_7bit;
+  
+  // Connect to SMTP server and send
+  if (!smtp.connect(&session)) {
+    Serial.println("❌ SMTP connection failed!");
+    Serial.println("Error: " + smtp.errorReason());
+    return;
+  }
+  
+  if (!MailClient.sendMail(&smtp, &message)) {
+    Serial.println("❌ Email send failed!");
+    Serial.println("Error: " + smtp.errorReason());
+  } else {
+    Serial.println("✅ Email sent successfully to all receivers!");
+    lastEmailTime = currentTime;
+  }
+  
+  // Close connection
+  smtp.closeSession();
 }
 
 // =================================================================
@@ -529,10 +693,12 @@ void setup() {
 
   // Servo (Allow allocation of all timers for ESP32)
   ESP32PWM::allocateTimer(0);
-  lockServo.attach(SERVO_PIN);
+  ESP32PWM::allocateTimer(1);
+  lockServo.setPeriodHertz(50);    // Standard 50 Hz servo
+  lockServo.attach(SERVO_PIN, 500, 2400); // Pin, min pulse width, max pulse width (microseconds)
   lockServo.write(0); // Start in closed position
   isServoOpen = false;
-  Serial.println("✓ Servo OK (Locked at 0°)");
+  Serial.println("✓ Servo OK (Initialized at 0° - Locked)");
 
   // Buzzer (ESP32 v3.x PWM - new API)
   ledcAttach(BUZZER_PIN, 5000, 8); // Pin, 5kHz frequency, 8-bit resolution

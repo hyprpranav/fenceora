@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Email Test - FENCEORA</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #1a1a1d;
+      color: #fff;
+    }
+    .container {
+      background: #2a2a2e;
+      padding: 30px;
+      border-radius: 10px;
+      border: 2px solid #00d9ff;
+    }
+    h1 {
+      color: #00d9ff;
+      text-align: center;
+    }
+    button {
+      width: 100%;
+      padding: 15px;
+      font-size: 18px;
+      background: linear-gradient(135deg, #00d9ff, #00ffae);
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      color: #000;
+      font-weight: bold;
+      margin: 10px 0;
+    }
+    button:hover {
+      opacity: 0.9;
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    #console {
+      background: #000;
+      padding: 15px;
+      border-radius: 5px;
+      margin-top: 20px;
+      min-height: 200px;
+      max-height: 400px;
+      overflow-y: auto;
+      font-family: monospace;
+      font-size: 12px;
+    }
+    .success { color: #00ffae; }
+    .error { color: #ff4757; }
+    .info { color: #00d9ff; }
+    .config-display {
+      background: #000;
+      padding: 15px;
+      border-radius: 5px;
+      margin: 15px 0;
+      font-family: monospace;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🧪 FENCEORA Email Test</h1>
+    
+    <div class="config-display" id="configDisplay">
+      <div class="info">Loading configuration...</div>
+    </div>
+    
+    <button id="testBtn" onclick="testEmail()">📧 Send Test Email to All 4 Receivers</button>
+    
+    <div id="console">
+      <div class="info">Console output will appear here...</div>
+    </div>
+  </div>
+
+  <!-- Include EmailJS Library -->
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+  
+  <!-- Include Config -->
+  <script src="email-config.js"></script>
+  
+  <script>
+    // Custom console logging
+    const consoleDiv = document.getElementById('console');
+    
+    function log(message, type = 'info') {
+      const div = document.createElement('div');
+      div.className = type;
+      div.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+      consoleDiv.appendChild(div);
+      consoleDiv.scrollTop = consoleDiv.scrollHeight;
+      console.log(message);
+    }
+    
+    // Display configuration on load
+    window.onload = function() {
+      const configDisplay = document.getElementById('configDisplay');
+      
+      if (typeof EMAIL_CONFIG !== 'undefined') {
+        configDisplay.innerHTML = `
+          <div class="success">✅ Configuration Loaded Successfully!</div>
+          <div class="info">Service ID: ${EMAIL_CONFIG.emailjs.serviceId}</div>
+          <div class="info">Template ID: ${EMAIL_CONFIG.emailjs.templateId}</div>
+          <div class="info">Public Key: ${EMAIL_CONFIG.emailjs.publicKey}</div>
+          <div class="info">Enabled: ${EMAIL_CONFIG.emailjs.enabled}</div>
+          <div class="info">Receivers: ${EMAIL_CONFIG.recipients.receivers.length}</div>
+          ${EMAIL_CONFIG.recipients.receivers.map((email, i) => `<div class="info">  ${i+1}. ${email}</div>`).join('')}
+        `;
+        log('Configuration loaded successfully', 'success');
+      } else {
+        configDisplay.innerHTML = `<div class="error">❌ Configuration not found!</div>`;
+        log('ERROR: EMAIL_CONFIG not found!', 'error');
+      }
+    };
+    
+    async function testEmail() {
+      const btn = document.getElementById('testBtn');
+      btn.disabled = true;
+      btn.textContent = '⏳ Sending emails...';
+      
+      consoleDiv.innerHTML = '<div class="info">Starting email send process...</div>';
+      
+      try {
+        log('Checking configuration...', 'info');
+        
+        if (typeof EMAIL_CONFIG === 'undefined') {
+          throw new Error('EMAIL_CONFIG is not defined');
+        }
+        
+        if (!EMAIL_CONFIG.emailjs.enabled) {
+          throw new Error('EmailJS is not enabled in config');
+        }
+        
+        log('Initializing EmailJS...', 'info');
+        emailjs.init(EMAIL_CONFIG.emailjs.publicKey);
+        log('EmailJS initialized successfully', 'success');
+        
+        log(`Preparing to send ${EMAIL_CONFIG.recipients.receivers.length} emails...`, 'info');
+        
+        // Send emails to each receiver
+        const emailPromises = EMAIL_CONFIG.recipients.receivers.map(async (receiverEmail, index) => {
+          log(`Sending email ${index + 1} to: ${receiverEmail}`, 'info');
+          
+          const templateParams = {
+            to_email: receiverEmail,
+            to_name: receiverEmail.split('@')[0], // Use email username instead of "Receiver #3"
+            from_name: EMAIL_CONFIG.template.from_name,
+            subject: EMAIL_CONFIG.template.subject,
+            message: EMAIL_CONFIG.template.test_message + `\n\nThis test email was sent on ${new Date().toLocaleString()}.`,
+            timestamp: new Date().toLocaleString(),
+            system_status: 'Email System Active',
+            alert_type: 'Test Notification',
+            sender_email: EMAIL_CONFIG.recipients.sender,
+            receiver_number: receiverEmail // Use email instead of number
+          };
+          
+          return emailjs.send(
+            EMAIL_CONFIG.emailjs.serviceId,
+            EMAIL_CONFIG.emailjs.templateId,
+            templateParams
+          );
+        });
+        
+        log('Waiting for all emails to send...', 'info');
+        const responses = await Promise.all(emailPromises);
+        
+        log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'success');
+        log('✅ ALL EMAILS SENT SUCCESSFULLY!', 'success');
+        log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'success');
+        log(`From: ${EMAIL_CONFIG.recipients.sender}`, 'info');
+        log('Sent to:', 'info');
+        
+        EMAIL_CONFIG.recipients.receivers.forEach((email, i) => {
+          log(`  ${i + 1}. ${email} - Status: ${responses[i].status}`, 'success');
+        });
+        
+        log(`Subject: ${EMAIL_CONFIG.template.subject}`, 'info');
+        log(`Time: ${new Date().toLocaleString()}`, 'info');
+        log(`Total emails sent: ${responses.length}`, 'success');
+        log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'success');
+        log('⚠️ CHECK YOUR EMAIL INBOXES (and spam folder)!', 'info');
+        
+        btn.textContent = '✅ Emails Sent! Check Inboxes';
+        btn.style.background = '#00ffae';
+        
+        setTimeout(() => {
+          btn.disabled = false;
+          btn.textContent = '📧 Send Test Email to All 4 Receivers';
+          btn.style.background = 'linear-gradient(135deg, #00d9ff, #00ffae)';
+        }, 5000);
+        
+      } catch (error) {
+        log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'error');
+        log('❌ EMAIL SENDING FAILED!', 'error');
+        log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'error');
+        log(`Error: ${error.message}`, 'error');
+        log(`Full error: ${JSON.stringify(error, null, 2)}`, 'error');
+        log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'error');
+        
+        btn.disabled = false;
+        btn.textContent = '❌ Error - Try Again';
+        btn.style.background = '#ff4757';
+        
+        setTimeout(() => {
+          btn.textContent = '📧 Send Test Email to All 4 Receivers';
+          btn.style.background = 'linear-gradient(135deg, #00d9ff, #00ffae)';
+        }, 3000);
+      }
+    }
+  </script>
+</body>
+</html>

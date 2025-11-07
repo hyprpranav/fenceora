@@ -1748,6 +1748,132 @@ body.light-theme .btn-download-pdf:hover {
   box-shadow: 0 10px 40px rgba(255, 71, 87, 0.6);
 }
 
+/* ========================================
+   CRITICAL WARNING OVERLAY
+======================================== */
+.critical-warning-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.95);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.critical-warning-overlay.hidden {
+  display: none;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.critical-warning-box {
+  background: linear-gradient(135deg, #ff4757, #ff6348);
+  border: 4px solid #fff;
+  border-radius: 20px;
+  padding: 50px;
+  max-width: 600px;
+  text-align: center;
+  box-shadow: 0 20px 80px rgba(255, 71, 87, 0.8);
+  animation: scaleUp 0.4s ease-out, pulse 2s ease-in-out infinite;
+}
+
+@keyframes scaleUp {
+  from {
+    transform: scale(0.8);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 20px 80px rgba(255, 71, 87, 0.8);
+  }
+  50% {
+    box-shadow: 0 20px 100px rgba(255, 71, 87, 1), 0 0 50px rgba(255, 255, 255, 0.5);
+  }
+}
+
+.warning-icon-large {
+  font-size: 100px;
+  color: #fff;
+  margin-bottom: 20px;
+  animation: shake 0.5s ease-in-out infinite;
+}
+
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-10px);
+  }
+  75% {
+    transform: translateX(10px);
+  }
+}
+
+.warning-title {
+  font-size: 48px;
+  font-weight: 900;
+  color: #fff;
+  margin: 20px 0;
+  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  letter-spacing: 2px;
+}
+
+.warning-message {
+  font-size: 28px;
+  font-weight: 700;
+  color: #fff;
+  margin: 15px 0;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.warning-details {
+  font-size: 18px;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 10px 0 30px 0;
+}
+
+.warning-dismiss-btn {
+  background: #fff;
+  color: #ff4757;
+  border: none;
+  padding: 15px 40px;
+  font-size: 20px;
+  font-weight: 700;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+}
+
+.warning-dismiss-btn:hover {
+  background: #ffe;
+  transform: scale(1.05);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+}
+
+.warning-dismiss-btn i {
+  margin-right: 10px;
+}
+
 /* Scrollbar Light Theme */
 body.light-theme .log-container::-webkit-scrollbar-track {
   background: rgba(102, 126, 234, 0.1);
@@ -1769,3 +1895,177 @@ body.light-theme .modal-body::-webkit-scrollbar-track {
 body.light-theme .modal-body::-webkit-scrollbar-thumb {
   background: linear-gradient(135deg, #667eea, #764ba2);
 }
+
+/* ========================================
+   EMAIL TEST SECTION STYLES
+======================================== */
+.email-test-section {
+  margin-top: 20px;
+  padding: 20px;
+  background: rgba(0, 217, 255, 0.1);
+  border-radius: 12px;
+  border: 2px solid var(--primary);
+}
+
+.email-test-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.email-test-header i {
+  font-size: 1.5rem;
+  color: var(--primary);
+}
+
+.email-test-header h4 {
+  margin: 0;
+  color: var(--primary);
+  font-size: 1.2rem;
+}
+
+.email-test-description {
+  color: var(--text);
+  font-size: 0.9rem;
+  margin-bottom: 15px;
+  line-height: 1.6;
+}
+
+.btn-test-email {
+  width: 100%;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.btn-test-email:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 20px rgba(0, 217, 255, 0.5);
+}
+
+.btn-test-email:disabled {
+  background: rgba(150, 150, 150, 0.3);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.btn-test-email i {
+  font-size: 1.1rem;
+}
+
+.email-test-timer {
+  margin-top: 15px;
+  padding: 12px;
+  background: rgba(255, 215, 0, 0.15);
+  border-radius: 8px;
+  border: 1px solid var(--warning);
+  display: none; /* Hidden by default, shown via JavaScript */
+  align-items: center;
+  gap: 10px;
+  color: var(--warning);
+  font-size: 0.95rem;
+}
+
+.email-test-timer.active {
+  display: flex;
+}
+
+.email-test-timer i {
+  font-size: 1.2rem;
+  animation: pulse 2s infinite;
+}
+
+.email-test-timer strong {
+  color: var(--warning);
+  font-size: 1.1rem;
+}
+
+.email-test-status {
+  margin-top: 15px;
+  padding: 12px;
+  background: rgba(0, 255, 174, 0.15);
+  border-radius: 8px;
+  border: 1px solid var(--secondary);
+  display: none; /* Hidden by default, shown via JavaScript */
+  align-items: center;
+  gap: 10px;
+  color: var(--secondary);
+  font-size: 0.95rem;
+  animation: slideIn 0.3s ease-out;
+}
+
+.email-test-status.active {
+  display: flex;
+}
+
+.email-test-status.error {
+  background: rgba(255, 71, 87, 0.15);
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.email-test-status i {
+  font-size: 1.2rem;
+}
+
+/* Light Theme Email Test Section */
+body.light-theme .email-test-section {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  border: 2px solid rgba(102, 126, 234, 0.3);
+}
+
+body.light-theme .email-test-header i,
+body.light-theme .email-test-header h4 {
+  color: #667eea;
+}
+
+body.light-theme .email-test-description {
+  color: #2c3e50;
+}
+
+body.light-theme .btn-test-email {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+body.light-theme .btn-test-email:hover:not(:disabled) {
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+}
+
+body.light-theme .btn-test-email:disabled {
+  background: rgba(150, 150, 150, 0.4);
+}
+
+body.light-theme .email-test-timer {
+  background: rgba(255, 165, 0, 0.12);
+  border-color: #ffa500;
+  color: #ff8c00;
+}
+
+body.light-theme .email-test-timer strong {
+  color: #ff8c00;
+}
+
+body.light-theme .email-test-status {
+  background: rgba(0, 200, 150, 0.12);
+  border-color: #00c896;
+  color: #00a878;
+}
+
+body.light-theme .email-test-status.error {
+  background: rgba(255, 71, 87, 0.12);
+  border-color: #ff4757;
+  color: #e63946;
+}
+

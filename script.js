@@ -11,6 +11,134 @@ let chartData = {
 const MAX_DATA_POINTS = 20;
 
 // ========================================================================
+// === LANGUAGE TRANSLATIONS ===
+// ========================================================================
+
+const translations = {
+  en: {
+    // Header
+    deviceConnected: "Device is Connected",
+    connectionLost: "Connection Lost",
+    ipNotSet: "IP Not Set",
+    editing: "Editing...",
+    connecting: "Connecting...",
+    
+    // Status Cards
+    currentDetected: "Current Detected!",
+    noCurrent: "No Current",
+    highHeatAlert: "High Heat Alert",
+    elevated: "Elevated",
+    optimal: "Optimal",
+    justNow: "Just now",
+    battery: "Battery",
+    solarInput: "Solar Input",
+    
+    // Buttons
+    edit: "Edit",
+    save: "Save",
+    
+    // Warning Overlay
+    criticalAlert: "⚠️ CRITICAL ALERT",
+    fenceCurrentDetected: "⚡ FENCE CURRENT DETECTED",
+    electricFieldDetected: "Electric field detected on perimeter fence!",
+    tamperingDetected: "🚨 TAMPERING DETECTED",
+    handDetected: "Hand or object detected near device!",
+    deviceMovement: "⚠️ DEVICE MOVEMENT DETECTED",
+    someoneTryingMove: "Someone is trying to move the device!",
+    unauthorizedAccess: "🔒 UNAUTHORIZED ACCESS ATTEMPT",
+    unknownCard: "Unknown RFID card scanned!",
+    dismiss: "DISMISS",
+    
+    // Time & Sensor Labels
+    time: "Time",
+    voltage: "Voltage",
+    sensor: "Sensor",
+    infrared: "Infrared",
+    accelerometer: "MPU6050 Accelerometer",
+    capacitive: "Capacitive",
+    cardUID: "Card UID"
+  },
+  ta: {
+    // Header (Tamil)
+    deviceConnected: "சாதனம் இணைக்கப்பட்டுள்ளது",
+    connectionLost: "இணைப்பு துண்டிக்கப்பட்டது",
+    ipNotSet: "IP அமைக்கப்படவில்லை",
+    editing: "திருத்துகிறது...",
+    connecting: "இணைக்கிறது...",
+    
+    // Status Cards (Tamil)
+    currentDetected: "மின்னோட்டம் கண்டறியப்பட்டது!",
+    noCurrent: "மின்னோட்டம் இல்லை",
+    highHeatAlert: "அதிக வெப்ப எச்சரிக்கை",
+    elevated: "உயர்ந்த",
+    optimal: "உகந்த",
+    justNow: "இப்போது",
+    battery: "பேட்டரி",
+    solarInput: "சூரிய உள்ளீடு",
+    
+    // Buttons (Tamil)
+    edit: "திருத்து",
+    save: "சேமி",
+    
+    // Warning Overlay (Tamil)
+    criticalAlert: "⚠️ முக்கிய எச்சரிக்கை",
+    fenceCurrentDetected: "⚡ வேலி மின்னோட்டம் கண்டறியப்பட்டது",
+    electricFieldDetected: "சுற்றளவு வேலியில் மின்புலம் கண்டறியப்பட்டது!",
+    tamperingDetected: "🚨 சிதைவு கண்டறியப்பட்டது",
+    handDetected: "சாதனத்திற்கு அருகில் கை அல்லது பொருள் கண்டறியப்பட்டது!",
+    deviceMovement: "⚠️ சாதன இயக்கம் கண்டறியப்பட்டது",
+    someoneTryingMove: "யாரோ சாதனத்தை நகர்த்த முயற்சிக்கிறார்கள்!",
+    unauthorizedAccess: "🔒 அங்கீகரிக்கப்படாத அணுகல் முயற்சி",
+    unknownCard: "அறியப்படாத RFID கார்டு ஸ்கேன் செய்யப்பட்டது!",
+    dismiss: "மூடு",
+    
+    // Time & Sensor Labels (Tamil)
+    time: "நேரம்",
+    voltage: "மின்னழுத்தம்",
+    sensor: "உணரி",
+    infrared: "அகச்சிவப்பு",
+    accelerometer: "MPU6050 முடுக்கமானி",
+    capacitive: "கொள்ளளவு",
+    cardUID: "கார்டு UID"
+  }
+};
+
+let currentLanguage = 'en'; // Default language
+
+// Helper function to get translated text
+function t(key) {
+  return translations[currentLanguage][key] || translations.en[key] || key;
+}
+
+// Helper function to convert Celsius to Fahrenheit
+function celsiusToFahrenheit(celsius) {
+  return (celsius * 9/5) + 32;
+}
+
+// Helper function to get temperature with unit
+function formatTemperature(celsius) {
+  const settings = JSON.parse(localStorage.getItem('fenceora_settings') || '{}');
+  const tempUnit = settings.tempUnit || 'C';
+  
+  if (tempUnit === 'F') {
+    const fahrenheit = celsiusToFahrenheit(celsius);
+    return fahrenheit.toFixed(1) + '°F';
+  }
+  return celsius.toFixed(1) + '°C';
+}
+
+// Helper function to get temperature threshold based on unit
+function getTempThreshold(celsiusThreshold) {
+  const settings = JSON.parse(localStorage.getItem('fenceora_settings') || '{}');
+  const tempUnit = settings.tempUnit || 'C';
+  
+  if (tempUnit === 'F') {
+    return celsiusToFahrenheit(celsiusThreshold);
+  }
+  return celsiusThreshold;
+}
+
+// ========================================================================
 // === 1. NEW DATA FETCHING (This replaces all simulation functions) ===
 // ========================================================================
 
@@ -23,7 +151,7 @@ async function fetchDataFromESP32() {
   if (!ip) {
     console.warn('ESP32 IP not set. Skipping data fetch.');
     // Optionally update UI to show "IP Not Set"
-    document.getElementById('connectionText').textContent = 'IP Not Set';
+    document.getElementById('connectionText').textContent = t('ipNotSet');
     const connectionDot = document.querySelector('.connection-dot');
     connectionDot.style.backgroundColor = 'var(--danger)';
     connectionDot.classList.remove('connected');
@@ -44,10 +172,13 @@ async function fetchDataFromESP32() {
     updateLogs(data.logs);
     updateRtcAndPower(data);
     updateChart(data);
+    
+    // Check for critical alerts (fence current, tampering, etc.)
+    checkForCriticalAlerts(data);
 
     // Update connection status to "Connected"
     const connectionDot = document.querySelector('.connection-dot');
-    document.getElementById('connectionText').textContent = 'Device is Connected';
+    document.getElementById('connectionText').textContent = t('deviceConnected');
     connectionDot.style.backgroundColor = 'var(--secondary)';
     connectionDot.classList.add('connected');
 
@@ -55,7 +186,7 @@ async function fetchDataFromESP32() {
     console.error('Fetch error:', error);
     // Update connection status to "Connection Lost"
     const connectionDot = document.querySelector('.connection-dot');
-    document.getElementById('connectionText').textContent = 'Connection Lost';
+    document.getElementById('connectionText').textContent = t('connectionLost');
     connectionDot.style.backgroundColor = 'var(--danger)';
     connectionDot.classList.remove('connected');
   }
@@ -72,30 +203,36 @@ function updateStatusCards(data) {
   
   // Use data from ESP32
   proximityValue.textContent = data.fence.status; // e.g., "ACTIVE" or "CLEAR"
-  proximityUpdate.textContent = "Just now";
+  proximityUpdate.textContent = t('justNow');
   
   if (data.fence.status === "ACTIVE") {
-    proximityStatus.textContent = "Current Detected!";
+    proximityStatus.textContent = t('currentDetected');
     proximityStatus.className = "status-badge status-alert";
   } else {
-    proximityStatus.textContent = "No Current";
+    proximityStatus.textContent = t('noCurrent');
     proximityStatus.className = "status-badge status-normal";
   }
   
-  // 2. Temperature Sensor
+  // 2. Temperature Sensor with Unit Conversion
   const temperatureValue = document.getElementById('tempValue');
   const temperatureStatus = document.getElementById('tempStatus');
   
-  temperatureValue.textContent = data.temperature.value.toFixed(1) + '°C';
+  // Convert temperature based on settings
+  temperatureValue.textContent = formatTemperature(data.temperature.value);
   
-  if (data.temperature.value > 35) {
-    temperatureStatus.textContent = "High Heat Alert";
+  // Temperature thresholds (using converted values)
+  const highTemp = getTempThreshold(35);
+  const elevatedTemp = getTempThreshold(30);
+  const currentTemp = getTempThreshold(data.temperature.value);
+  
+  if (currentTemp > highTemp) {
+    temperatureStatus.textContent = t('highHeatAlert');
     temperatureStatus.className = "status-badge status-alert";
-  } else if (data.temperature.value > 30) {
-    temperatureStatus.textContent = "Elevated";
+  } else if (currentTemp > elevatedTemp) {
+    temperatureStatus.textContent = t('elevated');
     temperatureStatus.className = "status-badge status-warning";
   } else {
-    temperatureStatus.textContent = "Optimal";
+    temperatureStatus.textContent = t('optimal');
     temperatureStatus.className = "status-badge status-normal";
   }
   
@@ -157,13 +294,13 @@ function updateRtcAndPower(data) {
   const newWidth = Math.max(0, Math.min(100, data.battery.level));
   
   batteryLevel.style.width = newWidth + '%';
-  batteryText.textContent = `Battery: ${Math.round(newWidth)}%`;
+  batteryText.textContent = `${t('battery')}: ${Math.round(newWidth)}%`;
 
   // 3. Solar
   const solarInput = document.querySelector('.battery-container .detail-label');
   const solarPower = document.querySelector('.solar-container .detail-label');
   
-  if(solarInput) solarInput.textContent = `Solar Input: ${data.solar.voltage.toFixed(1)}V`;
+  if(solarInput) solarInput.textContent = `${t('solarInput')}: ${data.solar.voltage.toFixed(1)}V`;
   if(solarPower) solarPower.textContent = `${data.solar.current.toFixed(1)}A / ${data.solar.power.toFixed(1)}W`;
   
   // 4. Uptime (optional, ESP32 can send this)
@@ -231,7 +368,7 @@ function initializeESP32Info() {
     ipInput.disabled = true;
     editBtn.classList.remove('hidden');
     saveBtn.classList.add('hidden');
-    connectionText.textContent = 'Connecting...';
+    connectionText.textContent = t('connecting');
     connectionDot.style.backgroundColor = 'var(--warning)';
   } else {
     // No saved IP - ready for user input
@@ -239,7 +376,7 @@ function initializeESP32Info() {
     ipInput.focus();
     editBtn.classList.add('hidden');
     saveBtn.classList.remove('hidden');
-    connectionText.textContent = 'Editing...';
+    connectionText.textContent = t('editing');
     connectionDot.style.backgroundColor = 'var(--warning)';
   }
   
@@ -250,7 +387,7 @@ function initializeESP32Info() {
     ipInput.select();
     editBtn.classList.add('hidden');
     saveBtn.classList.remove('hidden');
-    connectionText.textContent = 'Editing...';
+    connectionText.textContent = t('editing');
     connectionDot.style.backgroundColor = 'var(--warning)';
   });
   
@@ -276,7 +413,7 @@ function initializeESP32Info() {
       saveBtn.classList.add('hidden');
       
       // Show connecting feedback
-      connectionText.textContent = 'Connecting...';
+      connectionText.textContent = t('connecting');
       connectionDot.style.backgroundColor = 'var(--warning)';
       
       // Trigger an immediate fetch
@@ -402,10 +539,130 @@ function initializeSettings() {
   const saveBtn = document.querySelector('.btn-save');
   const resetBtn = document.querySelector('.btn-reset');
   const themeSelect = document.getElementById('theme');
+  const languageSelect = document.getElementById('language');
+  const tempUnitSelect = document.getElementById('tempUnit');
+  const emailNotificationsCheckbox = document.getElementById('emailNotifications');
+  const emailTestSection = document.getElementById('emailTestSection');
+  const testEmailBtn = document.getElementById('testEmailBtn');
+  
+  let testEmailTimer = null;
+  let testEmailCooldown = 0;
+
+  // Show/hide email test section based on checkbox
+  if (emailNotificationsCheckbox && emailTestSection) {
+    // Show by default if checked
+    if (emailNotificationsCheckbox.checked) {
+      emailTestSection.style.display = 'block';
+    }
+    
+    emailNotificationsCheckbox.addEventListener('change', function() {
+      if (this.checked) {
+        emailTestSection.style.display = 'block';
+      } else {
+        emailTestSection.style.display = 'none';
+      }
+    });
+  }
+
+  // Test Email Button Handler
+  if (testEmailBtn) {
+    testEmailBtn.addEventListener('click', async function() {
+      if (testEmailCooldown > 0) return;
+      
+      // Disable button and show loading
+      testEmailBtn.disabled = true;
+      const testEmailText = document.getElementById('testEmailText');
+      const originalText = testEmailText.textContent;
+      testEmailText.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+
+      try {
+        // Send test email using a email service (EmailJS, FormSubmit, etc.)
+        // For now, we'll simulate the email sending
+        const result = await sendTestEmail();
+        
+        if (result && result.responses && result.responses.length > 0) {
+          showEmailStatus(`✅ Test emails sent to all ${result.responses.length} receivers! Check your inboxes (and spam folder).`, 'success');
+        } else {
+          showEmailStatus('✅ Test email sent successfully! (Simulation mode - Check email-config.js to enable real emails)', 'success');
+        }
+        startTestEmailCooldown();
+      } catch (error) {
+        console.error('Test email error:', error);
+        showEmailStatus(`❌ Error: ${error.message}`, 'error');
+        testEmailBtn.disabled = false;
+        testEmailText.innerHTML = '<i class="fas fa-paper-plane"></i> Send Test Email';
+      }
+    });
+  }
+
+  // NOTE: sendTestEmail() function is loaded from email-sender.js
+
+  // Start 30-second cooldown timer
+  function startTestEmailCooldown() {
+    testEmailCooldown = 30;
+    const testEmailText = document.getElementById('testEmailText');
+    const emailTestTimer = document.getElementById('emailTestTimer');
+    const timerCountdown = document.getElementById('timerCountdown');
+    
+    // Show timer
+    emailTestTimer.classList.add('active');
+    
+    // Update countdown every second
+    testEmailTimer = setInterval(() => {
+      testEmailCooldown--;
+      timerCountdown.textContent = testEmailCooldown;
+      
+      if (testEmailCooldown <= 0) {
+        clearInterval(testEmailTimer);
+        testEmailBtn.disabled = false;
+        testEmailText.innerHTML = '<i class="fas fa-paper-plane"></i> Send Test Email';
+        emailTestTimer.classList.remove('active');
+      }
+    }, 1000);
+  }
+
+  // Show email status message
+  function showEmailStatus(message, type = 'success') {
+    const emailTestStatus = document.getElementById('emailTestStatus');
+    const emailStatusText = document.getElementById('emailStatusText');
+    
+    emailStatusText.textContent = message;
+    emailTestStatus.className = 'email-test-status';
+    if (type === 'error') {
+      emailTestStatus.classList.add('error');
+    }
+    
+    emailTestStatus.classList.add('active');
+    
+    // Hide status after 5 seconds for success, 8 seconds for error
+    setTimeout(() => {
+      emailTestStatus.classList.remove('active');
+    }, type === 'error' ? 8000 : 5000);
+  }
 
   // Apply theme immediately on change
   themeSelect.addEventListener('change', function() {
     applyTheme(this.value);
+  });
+
+  // Apply language immediately on change
+  if (languageSelect) {
+    languageSelect.addEventListener('change', function() {
+      currentLanguage = this.value;
+      applyLanguage();
+      // Re-fetch data to update UI with new language
+      fetchDataFromESP32();
+    });
+  }
+
+  // Apply temperature unit immediately on change
+  tempUnitSelect.addEventListener('change', function() {
+    // Save to settings
+    const settings = JSON.parse(localStorage.getItem('fenceora_settings') || '{}');
+    settings.tempUnit = this.value;
+    localStorage.setItem('fenceora_settings', JSON.stringify(settings));
+    // Re-fetch data to update temperature display
+    fetchDataFromESP32();
   });
 
   saveBtn.addEventListener('click', function() {
@@ -413,6 +670,7 @@ function initializeSettings() {
     const settings = {
       refreshRate: document.getElementById('refreshRate').value,
       theme: document.getElementById('theme').value,
+      language: languageSelect ? languageSelect.value : 'en',
       enableNotifications: document.getElementById('enableNotifications').checked,
       soundAlerts: document.getElementById('soundAlerts').checked,
       emailNotifications: document.getElementById('emailNotifications').checked,
@@ -423,8 +681,10 @@ function initializeSettings() {
     // Save to localStorage
     localStorage.setItem('fenceora_settings', JSON.stringify(settings));
     
-    // Apply the selected theme
+    // Apply the selected theme and language
     applyTheme(settings.theme);
+    currentLanguage = settings.language;
+    applyLanguage();
 
     // Show success feedback
     saveBtn.innerHTML = '<i class="fas fa-check"></i> Saved!';
@@ -434,6 +694,8 @@ function initializeSettings() {
       saveBtn.innerHTML = '<i class="fas fa-save"></i> Save Settings';
       saveBtn.style.background = 'linear-gradient(135deg, var(--primary), var(--secondary))';
       document.getElementById('settingsModal').classList.remove('show');
+      // Refresh data to apply new settings
+      fetchDataFromESP32();
     }, 1500);
   });
 
@@ -441,6 +703,7 @@ function initializeSettings() {
     if (confirm('Reset all settings to default?')) {
       localStorage.removeItem('fenceora_settings');
       document.body.classList.remove('light-theme');
+      currentLanguage = 'en';
       location.reload();
     }
   });
@@ -451,15 +714,43 @@ function initializeSettings() {
     const settings = JSON.parse(savedSettings);
     document.getElementById('refreshRate').value = settings.refreshRate || '5000';
     document.getElementById('theme').value = settings.theme || 'dark';
+    if (languageSelect) languageSelect.value = settings.language || 'en';
     document.getElementById('enableNotifications').checked = settings.enableNotifications !== false;
     document.getElementById('soundAlerts').checked = settings.soundAlerts !== false;
     document.getElementById('emailNotifications').checked = settings.emailNotifications || false;
     document.getElementById('timeFormat').value = settings.timeFormat || '24';
     document.getElementById('tempUnit').value = settings.tempUnit || 'C';
     
-    // Apply saved theme on load
+    // Show email test section if email notifications are enabled
+    if (settings.emailNotifications && emailTestSection) {
+      emailTestSection.style.display = 'block';
+    }
+    
+    // Apply saved theme and language on load
     applyTheme(settings.theme);
+    currentLanguage = settings.language || 'en';
+    applyLanguage();
   }
+}
+
+// Apply language to UI elements
+function applyLanguage() {
+  // Update connection text if it exists
+  const connectionText = document.getElementById('connectionText');
+  if (connectionText) {
+    const currentText = connectionText.textContent;
+    if (currentText.includes('Connected')) connectionText.textContent = t('deviceConnected');
+    else if (currentText.includes('Lost')) connectionText.textContent = t('connectionLost');
+    else if (currentText.includes('Not Set')) connectionText.textContent = t('ipNotSet');
+    else if (currentText.includes('Editing')) connectionText.textContent = t('editing');
+    else if (currentText.includes('Connecting')) connectionText.textContent = t('connecting');
+  }
+  
+  // Update button texts
+  const editBtn = document.getElementById('editIpBtn');
+  const saveBtn = document.getElementById('saveIpBtn');
+  if (editBtn) editBtn.textContent = t('edit');
+  if (saveBtn) saveBtn.textContent = t('save');
 }
 
 // Apply theme function
@@ -741,3 +1032,149 @@ window.onload = function() {
                       
   setInterval(fetchDataFromESP32, parseInt(refreshRate));
 };
+
+// ==========================================================
+// === 4. CRITICAL WARNING OVERLAY SYSTEM ===
+// ==========================================================
+
+/**
+ * Shows a critical warning overlay on the dashboard
+ * @param {string} title - Main warning title
+ * @param {string} message - Warning message
+ * @param {string} details - Additional details (time, location, etc.)
+ */
+function showWarning(title, message, details) {
+  document.getElementById('warningTitle').textContent = title;
+  document.getElementById('warningMessage').textContent = message;
+  document.getElementById('warningDetails').textContent = details;
+  document.getElementById('criticalWarningOverlay').classList.remove('hidden');
+  
+  // Play alert sound (optional - you can add an audio element)
+  // const alertSound = new Audio('alert.mp3');
+  // alertSound.play();
+  
+  // Note: Email notifications are sent directly from ESP32
+  // No browser-side email code needed!
+  console.log('⚠️ Critical Alert:', title, message, details);
+  console.log('📧 Email notifications sent from ESP32 to all receivers');
+}
+
+/**
+ * Dismisses the critical warning overlay
+ */
+function dismissWarning() {
+  document.getElementById('criticalWarningOverlay').classList.add('hidden');
+}
+
+/**
+ * Checks for critical alerts in the data and triggers warnings
+ * Called from fetchDataFromESP32() after receiving data
+ * @param {object} data - ESP32 sensor data
+ */
+function checkForCriticalAlerts(data) {
+  const now = new Date().toLocaleTimeString();
+  const settings = JSON.parse(localStorage.getItem('fenceora_settings') || '{}');
+  
+  // Check for fence current detection
+  if (data.fence.status === "ACTIVE") {
+    showWarning(
+      t('fenceCurrentDetected'),
+      t('electricFieldDetected'),
+      `${t('time')}: ${now} | ${t('voltage')}: ${data.solar.voltage}V`
+    );
+    
+    // Send email notification if enabled
+    if (settings.emailNotifications) {
+      sendAlertEmail('Fence Current Detected', 
+        `⚡ CRITICAL: Electric field detected on perimeter fence! Time: ${now}, Voltage: ${data.solar.voltage}V`);
+    }
+    return; // Show only one alert at a time
+  }
+  
+  // Check for tampering (IR sensor)
+  if (data.tamper.ir === true) {
+    showWarning(
+      t('tamperingDetected'),
+      t('handDetected'),
+      `${t('time')}: ${now} | ${t('sensor')}: ${t('infrared')}`
+    );
+    
+    // Send email notification if enabled
+    if (settings.emailNotifications) {
+      sendAlertEmail('Tampering Detected', 
+        `🚨 ALERT: Hand or object detected near device! Time: ${now}, Sensor: Infrared`);
+    }
+    return;
+  }
+  
+  // Check for device movement (Motion sensor)
+  if (data.tamper.motion === true) {
+    showWarning(
+      t('deviceMovement'),
+      t('someoneTryingMove'),
+      `${t('time')}: ${now} | ${t('sensor')}: ${t('accelerometer')}`
+    );
+    
+    // Send email notification if enabled
+    if (settings.emailNotifications) {
+      sendAlertEmail('Device Movement Detected', 
+        `⚠️ WARNING: Someone is trying to move the device! Time: ${now}, Sensor: MPU6050`);
+    }
+    return;
+  }
+  
+  // Check for unauthorized RFID attempt
+  if (data.lastRfidStatus === "DENIED") {
+    showWarning(
+      t('unauthorizedAccess'),
+      t('unknownCard'),
+      `${t('time')}: ${now} | ${t('cardUID')}: ${data.lastRfidUID}`
+    );
+    
+    // Send email notification if enabled
+    if (settings.emailNotifications) {
+      sendAlertEmail('Unauthorized Access Attempt', 
+        `🔒 SECURITY: Unknown RFID card scanned! Time: ${now}, Card UID: ${data.lastRfidUID}`);
+    }
+  }
+}
+
+// Send alert email to all receivers
+async function sendAlertEmail(alertType, alertMessage) {
+  if (typeof EMAIL_CONFIG === 'undefined' || !EMAIL_CONFIG.emailjs.enabled) {
+    console.log('Email notifications not configured');
+    return;
+  }
+  
+  try {
+    emailjs.init(EMAIL_CONFIG.emailjs.publicKey);
+    
+    const emailPromises = EMAIL_CONFIG.recipients.receivers.map(async (receiverEmail) => {
+      const templateParams = {
+        to_email: receiverEmail,
+        to_name: receiverEmail.split('@')[0],
+        from_name: 'FENCEORA Security System',
+        subject: `🚨 FENCEORA ALERT: ${alertType}`,
+        message: alertMessage,
+        timestamp: new Date().toLocaleString(),
+        system_status: 'ALERT - Immediate Attention Required',
+        alert_type: alertType,
+        sender_email: EMAIL_CONFIG.recipients.sender,
+        receiver_number: receiverEmail
+      };
+      
+      return emailjs.send(
+        EMAIL_CONFIG.emailjs.serviceId,
+        EMAIL_CONFIG.emailjs.templateId,
+        templateParams
+      );
+    });
+    
+    await Promise.all(emailPromises);
+    console.log(`✅ Alert emails sent: ${alertType}`);
+  } catch (error) {
+    console.error('❌ Failed to send alert email:', error);
+  }
+}
+
+
