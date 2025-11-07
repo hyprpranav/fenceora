@@ -1,3 +1,109 @@
+// ============================
+// Electric Spark Loading Animation Control
+// ============================
+
+window.addEventListener('load', () => {
+  const loadingScreen = document.getElementById('loadingScreen');
+  const mainContainer = document.getElementById('mainContainer');
+  const loadingProgress = document.getElementById('loadingProgress');
+  const loadingPercentage = document.getElementById('loadingPercentage');
+  const thunderFlash = document.getElementById('thunderFlash');
+  const electricHum = document.getElementById('electricHum');
+  const thunderSound = document.getElementById('thunderSound');
+  
+  // Play ambient electric hum sound
+  if (electricHum) {
+    electricHum.volume = 0.15;
+    electricHum.play().catch(e => console.log('Audio play prevented:', e));
+  }
+  
+  let progress = 0;
+  const duration = 3000; // 3 seconds
+  const intervalTime = 30;
+  const increment = (100 / duration) * intervalTime;
+  
+  // Animate loading percentage and fence progress
+  const loadingInterval = setInterval(() => {
+    progress += increment;
+    
+    if (progress >= 100) {
+      progress = 100;
+      clearInterval(loadingInterval);
+      
+      // Stop electric hum
+      if (electricHum) {
+        electricHum.pause();
+      }
+      
+      // MASSIVE THUNDER EFFECT at 100%!
+      setTimeout(() => {
+        // Trigger thunder flash
+        thunderFlash.classList.add('active');
+        
+        // Play thunder sound
+        if (thunderSound) {
+          thunderSound.volume = 0.4;
+          thunderSound.play().catch(e => console.log('Audio play prevented:', e));
+        }
+        
+        // Make all lightning bolts flash intensely
+        const allLightning = document.querySelectorAll('.lightning');
+        allLightning.forEach(bolt => {
+          bolt.style.opacity = '1';
+          bolt.style.animation = 'none';
+        });
+        
+        // Flash effect
+        setTimeout(() => {
+          allLightning.forEach(bolt => {
+            bolt.style.opacity = '0';
+          });
+        }, 100);
+        
+        setTimeout(() => {
+          allLightning.forEach(bolt => {
+            bolt.style.opacity = '1';
+          });
+        }, 200);
+        
+        setTimeout(() => {
+          allLightning.forEach(bolt => {
+            bolt.style.opacity = '0';
+          });
+        }, 300);
+        
+        setTimeout(() => {
+          allLightning.forEach(bolt => {
+            bolt.style.opacity = '1';
+          });
+        }, 450);
+        
+        // Shake the screen effect
+        loadingScreen.style.animation = 'screenShake 0.5s ease-in-out';
+        
+        // Final fade out after thunder
+        setTimeout(() => {
+          loadingScreen.classList.add('fade-out');
+          mainContainer.classList.add('show');
+          
+          // Remove loading screen from DOM after animation
+          setTimeout(() => {
+            loadingScreen.style.display = 'none';
+          }, 800);
+        }, 800);
+        
+      }, 300);
+    }
+    
+    // Update progress bar
+    loadingPercentage.textContent = `${Math.floor(progress)}%`;
+  }, intervalTime);
+});
+
+// ============================
+// Global Variables and Chart Setup
+// ============================
+
 // Global variable for the Chart
 let sensorChart;
 let chartData = {
@@ -172,6 +278,7 @@ async function fetchDataFromESP32() {
     updateLogs(data.logs);
     updateRtcAndPower(data);
     updateChart(data);
+    updateMPU6050(data); // Update MPU6050 sensor display
     
     // Check for critical alerts (fence current, tampering, etc.)
     checkForCriticalAlerts(data);
@@ -1067,6 +1174,82 @@ function dismissWarning() {
 }
 
 /**
+ * Updates MPU6050 Motion Sensor card with gyroscope and accelerometer data
+ * @param {object} data - ESP32 sensor data
+ */
+function updateMPU6050(data) {
+  // Check if MPU6050 data exists
+  if (!data.mpu6050) return;
+  
+  const mpu = data.mpu6050;
+  
+  // Update Gyroscope values (degrees/second)
+  document.getElementById('gyroX').textContent = mpu.gyro.x.toFixed(2);
+  document.getElementById('gyroY').textContent = mpu.gyro.y.toFixed(2);
+  document.getElementById('gyroZ').textContent = mpu.gyro.z.toFixed(2);
+  
+  // Update Accelerometer values (m/s²)
+  document.getElementById('accelX').textContent = mpu.accel.x.toFixed(2);
+  document.getElementById('accelY').textContent = mpu.accel.y.toFixed(2);
+  document.getElementById('accelZ').textContent = mpu.accel.z.toFixed(2);
+  
+  // Update temperature if available
+  if (mpu.temperature) {
+    document.getElementById('mpuTemp').textContent = `${mpu.temperature.toFixed(1)}°C`;
+  }
+  
+  // Calculate vibration level from accelerometer magnitude
+  const accelMagnitude = Math.sqrt(
+    mpu.accel.x ** 2 + 
+    mpu.accel.y ** 2 + 
+    mpu.accel.z ** 2
+  );
+  
+  let vibrationLevel = 'Low';
+  let vibrationColor = 'var(--secondary)';
+  
+  if (accelMagnitude > 15) {
+    vibrationLevel = 'High';
+    vibrationColor = 'var(--danger)';
+  } else if (accelMagnitude > 11) {
+    vibrationLevel = 'Medium';
+    vibrationColor = 'var(--warning)';
+  }
+  
+  const vibrationElement = document.getElementById('vibrationLevel');
+  vibrationElement.textContent = vibrationLevel;
+  vibrationElement.style.color = vibrationColor;
+  
+  // Update status badges based on motion detection
+  const mpuStatusBadge = document.getElementById('mpuStatus');
+  const mpuStatusText = document.getElementById('mpuStatusText');
+  const mpuAlertBadge = document.getElementById('mpuAlert');
+  
+  // Detect significant motion (gyroscope threshold)
+  const gyroMagnitude = Math.sqrt(
+    mpu.gyro.x ** 2 + 
+    mpu.gyro.y ** 2 + 
+    mpu.gyro.z ** 2
+  );
+  
+  if (gyroMagnitude > 50 || accelMagnitude > 15) {
+    // Motion detected!
+    mpuStatusText.textContent = 'Motion Detected';
+    mpuStatusBadge.style.background = 'rgba(255, 71, 87, 0.2)';
+    mpuStatusBadge.style.borderColor = 'var(--danger)';
+    mpuStatusBadge.style.color = 'var(--danger)';
+    mpuAlertBadge.classList.add('active');
+  } else {
+    // Stable
+    mpuStatusText.textContent = 'Stable';
+    mpuStatusBadge.style.background = 'rgba(0, 255, 174, 0.15)';
+    mpuStatusBadge.style.borderColor = 'var(--secondary)';
+    mpuStatusBadge.style.color = 'var(--secondary)';
+    mpuAlertBadge.classList.remove('active');
+  }
+}
+
+/**
  * Checks for critical alerts in the data and triggers warnings
  * Called from fetchDataFromESP32() after receiving data
  * @param {object} data - ESP32 sensor data
@@ -1176,5 +1359,188 @@ async function sendAlertEmail(alertType, alertMessage) {
     console.error('❌ Failed to send alert email:', error);
   }
 }
+
+// ============================
+// Floating Feedback Button & Modal
+// ============================
+
+// Feedback Modal
+const feedbackBtn = document.getElementById('feedbackBtn');
+const feedbackModal = document.getElementById('feedbackModal');
+const closeFeedbackModal = document.getElementById('closeFeedbackModal');
+const cancelFeedback = document.getElementById('cancelFeedback');
+const feedbackForm = document.getElementById('feedbackForm');
+
+if (feedbackBtn && feedbackModal) {
+  feedbackBtn.addEventListener('click', () => {
+    feedbackModal.style.display = 'flex';
+  });
+
+  closeFeedbackModal.addEventListener('click', () => {
+    feedbackModal.style.display = 'none';
+    feedbackForm.reset();
+  });
+
+  cancelFeedback.addEventListener('click', () => {
+    feedbackModal.style.display = 'none';
+    feedbackForm.reset();
+  });
+
+  window.addEventListener('click', (e) => {
+    if (e.target === feedbackModal) {
+      feedbackModal.style.display = 'none';
+      feedbackForm.reset();
+    }
+  });
+}
+
+// Feedback Form Submission
+if (feedbackForm) {
+  feedbackForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const name = document.getElementById('feedbackName').value;
+    const email = document.getElementById('feedbackEmail').value;
+    const type = document.getElementById('feedbackType').value;
+    const message = document.getElementById('feedbackMessage').value;
+
+    // Disable submit button
+    const submitBtn = feedbackForm.querySelector('.btn-submit-feedback');
+    const originalBtnText = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+
+    try {
+      // Check if EmailJS is configured
+      if (typeof EMAIL_CONFIG === 'undefined' || !EMAIL_CONFIG.emailjs.enabled) {
+        throw new Error('Email service not configured');
+      }
+
+      // Initialize EmailJS
+      emailjs.init(EMAIL_CONFIG.emailjs.publicKey);
+
+      // Send feedback email to fenceora.h4@gmail.com
+      const templateParams = {
+        to_email: 'fenceora.h4@gmail.com',
+        to_name: 'FENCEORA Team',
+        from_name: name,
+        sender_email: email,
+        subject: `📩 FENCEORA Feedback: ${type}`,
+        message: message,
+        feedback_type: type,
+        timestamp: new Date().toLocaleString(),
+        system_status: 'User Feedback Submission',
+        alert_type: type,
+        receiver_number: 'fenceora.h4@gmail.com'
+      };
+
+      await emailjs.send(
+        EMAIL_CONFIG.emailjs.serviceId,
+        EMAIL_CONFIG.emailjs.templateId,
+        templateParams
+      );
+
+      // Show success message
+      showFeedbackStatus('✅ Thank you! Your feedback has been sent successfully!', 'success');
+      
+      // Reset form and close modal after 3 seconds
+      setTimeout(() => {
+        feedbackForm.reset();
+        feedbackModal.style.display = 'none';
+        document.getElementById('feedbackStatus').classList.remove('active');
+      }, 3000);
+
+      console.log('✅ Feedback sent successfully');
+    } catch (error) {
+      console.error('❌ Failed to send feedback:', error);
+      showFeedbackStatus('❌ Failed to send feedback. Please try again or email us directly at fenceora.h4@gmail.com', 'error');
+    } finally {
+      // Re-enable submit button
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = originalBtnText;
+    }
+  });
+}
+
+// Show feedback status message
+function showFeedbackStatus(message, type = 'success') {
+  const feedbackStatus = document.getElementById('feedbackStatus');
+  const feedbackStatusText = document.getElementById('feedbackStatusText');
+  
+  if (feedbackStatus && feedbackStatusText) {
+    feedbackStatusText.textContent = message;
+    feedbackStatus.className = 'feedback-status';
+    if (type === 'error') {
+      feedbackStatus.classList.add('error');
+    }
+    feedbackStatus.classList.add('active');
+  }
+}
+
+// ============================
+// Emoji Eyes Follow Cursor - SIMPLIFIED
+// ============================
+window.addEventListener('load', function() {
+  console.log('🔍 Starting eye tracking initialization...');
+  
+  setTimeout(() => {
+    const leftPupil = document.querySelector('.left-eye .emoji-pupil');
+    const rightPupil = document.querySelector('.right-eye .emoji-pupil');
+    const leftEye = document.querySelector('.left-eye');
+    const rightEye = document.querySelector('.right-eye');
+    
+    console.log('Left pupil found:', leftPupil);
+    console.log('Right pupil found:', rightPupil);
+    console.log('Left eye found:', leftEye);
+    console.log('Right eye found:', rightEye);
+    
+    if (!leftPupil || !rightPupil || !leftEye || !rightEye) {
+      console.error('❌ Emoji elements not found!');
+      return;
+    }
+    
+    console.log('✅ All emoji elements found! Starting tracking...');
+    
+    document.addEventListener('mousemove', function(e) {
+      try {
+        // Get left eye position
+        const leftEyeRect = leftEye.getBoundingClientRect();
+        const leftEyeCenterX = leftEyeRect.left + leftEyeRect.width / 2;
+        const leftEyeCenterY = leftEyeRect.top + leftEyeRect.height / 2;
+        
+        // Get right eye position
+        const rightEyeRect = rightEye.getBoundingClientRect();
+        const rightEyeCenterX = rightEyeRect.left + rightEyeRect.width / 2;
+        const rightEyeCenterY = rightEyeRect.top + rightEyeRect.height / 2;
+        
+        // Calculate for left eye
+        const leftDeltaX = e.clientX - leftEyeCenterX;
+        const leftDeltaY = e.clientY - leftEyeCenterY;
+        const leftAngle = Math.atan2(leftDeltaY, leftDeltaX);
+        const leftDistance = Math.min(2, Math.sqrt(leftDeltaX * leftDeltaX + leftDeltaY * leftDeltaY) / 200);
+        
+        const leftPupilX = Math.cos(leftAngle) * leftDistance;
+        const leftPupilY = Math.sin(leftAngle) * leftDistance;
+        
+        // Calculate for right eye
+        const rightDeltaX = e.clientX - rightEyeCenterX;
+        const rightDeltaY = e.clientY - rightEyeCenterY;
+        const rightAngle = Math.atan2(rightDeltaY, rightDeltaX);
+        const rightDistance = Math.min(2, Math.sqrt(rightDeltaX * rightDeltaX + rightDeltaY * rightDeltaY) / 200);
+        
+        const rightPupilX = Math.cos(rightAngle) * rightDistance;
+        const rightPupilY = Math.sin(rightAngle) * rightDistance;
+        
+        // Apply transform
+        leftPupil.style.transform = 'translate(' + leftPupilX + 'px, ' + leftPupilY + 'px)';
+        rightPupil.style.transform = 'translate(' + rightPupilX + 'px, ' + rightPupilY + 'px)';
+      } catch (error) {
+        console.error('Error in eye tracking:', error);
+      }
+    });
+    
+    console.log('👁️ Eye tracking is now active!');
+  }, 500);
+});
 
 

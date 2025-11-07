@@ -16,7 +16,61 @@
 </head>
 <body>
 
-  <div class="container">
+  <!-- Electric Spark Loading Animation -->
+  <div class="loading-screen" id="loadingScreen">
+    <div class="electric-fence-animation">
+      <div class="lightning-bolts">
+        <svg class="lightning lightning-1" viewBox="0 0 50 100">
+          <path d="M 25 0 L 20 40 L 30 40 L 15 100 L 35 50 L 25 50 Z" fill="url(#lightning-gradient)" />
+        </svg>
+        <svg class="lightning lightning-2" viewBox="0 0 50 100">
+          <path d="M 25 0 L 20 40 L 30 40 L 15 100 L 35 50 L 25 50 Z" fill="url(#lightning-gradient)" />
+        </svg>
+        <svg class="lightning lightning-3" viewBox="0 0 50 100">
+          <path d="M 25 0 L 20 40 L 30 40 L 15 100 L 35 50 L 25 50 Z" fill="url(#lightning-gradient)" />
+        </svg>
+        <svg class="lightning lightning-4" viewBox="0 0 50 100">
+          <path d="M 25 0 L 20 40 L 30 40 L 15 100 L 35 50 L 25 50 Z" fill="url(#lightning-gradient)" />
+        </svg>
+      </div>
+      <!-- Final Thunder Flash Overlay -->
+      <div class="thunder-flash" id="thunderFlash"></div>
+      <!-- Sound Effects -->
+      <audio id="electricHum" loop>
+        <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBgoOEhYaHiImKi4yNjo+QkZKTlJWWl5iZmpucnZ6foKGio6SlpqeoqaqrrK2ur7CxsrO0tba3uLm6u7y9vr/AwcLDxMXGx8jJysvMzc7P0NHS09TV1tfY2drb3N3e3+Dh4uPk5ebn6Onq6+zt7u/w8fLz9PX29/j5+vv8/f7/AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4vMDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5fYGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6PkJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm5+jp6uvs7e7v8PHy8/T19vf4+fr7/P3+/w==" type="audio/wav">
+      </audio>
+      <audio id="thunderSound">
+        <source src="data:audio/wav;base64,UklGRhQEAABXQVZFZm10IBAAAAABAAEAIlYAAESsAAABAAgAZGF0YfADAACQj46Ni4qJiIaFhIOCgYB/fn18e3p5eHd2dXRzcnFwb25tbGtqaWhnZmVkY2JhYF9eXVxbWllYV1ZVVFNSUVBPTk1MS0pJSEdGRURDQkFAPz49PDs6OTg3NjU0MzIxMC8uLSwrKikoJyYlJCMiISAfHh0cGxoZGBcWFRQTEhEQDw4NDAsKCQgHBgUEAwIBAA==" type="audio/wav">
+      </audio>
+      <div class="power-circle">
+        <div class="circle-outer"></div>
+        <div class="circle-middle"></div>
+        <div class="circle-inner"></div>
+        <i class="fas fa-bolt power-icon"></i>
+      </div>
+      <div class="loading-text">
+        <h1 class="loading-title">FENCEORA</h1>
+        <p class="loading-subtitle">Initializing Security System...</p>
+        <div class="loading-bar">
+          <div class="loading-progress" id="loadingProgress"></div>
+        </div>
+        <p class="loading-percentage" id="loadingPercentage">0%</p>
+      </div>
+    </div>
+    
+    <!-- SVG Gradient Definitions -->
+    <svg width="0" height="0" class="svg-defs">
+      <defs>
+        <linearGradient id="lightning-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" class="stop-color-1" />
+          <stop offset="50%" class="stop-color-2" />
+          <stop offset="100%" class="stop-color-3" />
+        </linearGradient>
+      </defs>
+    </svg>
+  </div>
+
+  <div class="container" id="mainContainer">
     <!-- Critical Warning Overlay (Hidden by default) -->
     <div id="criticalWarningOverlay" class="critical-warning-overlay hidden">
       <div class="critical-warning-box">
@@ -76,14 +130,40 @@
 
     <div class="dashboard">
 
-      <!-- Card 1: Capacitive Proximity Sensor -->
-      <div class="card">
+      <!-- Card 1: Capacitive Proximity Sensor - LARGE WITH WARNINGS -->
+      <div class="card prox-card-large">
         <div class="card-header">
           <h2>Capacitive Proximity Sensor</h2>
           <i class="fas fa-hand-paper card-icon"></i>
         </div>
-        <div class="sensor-value" id="proxValue">12.5 cm</div>
+        <div class="sensor-value-large" id="proxValue">12.5 cm</div>
         <div class="status-badge status-normal" id="proxStatus">Normal Range</div>
+        
+        <!-- Warning Notifications -->
+        <div class="warning-notifications" id="proxWarnings">
+          <div class="warning-item warning-critical">
+            <i class="fas fa-exclamation-circle"></i>
+            <div class="warning-content">
+              <span class="warning-text">Critical: Object too close! (5 cm)</span>
+              <span class="warning-time">2 min ago</span>
+            </div>
+          </div>
+          <div class="warning-item warning-alert">
+            <i class="fas fa-exclamation-triangle"></i>
+            <div class="warning-content">
+              <span class="warning-text">Alert: Proximity threshold reached</span>
+              <span class="warning-time">5 min ago</span>
+            </div>
+          </div>
+          <div class="warning-item warning-info">
+            <i class="fas fa-info-circle"></i>
+            <div class="warning-content">
+              <span class="warning-text">Info: Sensitivity adjusted</span>
+              <span class="warning-time">10 min ago</span>
+            </div>
+          </div>
+        </div>
+        
         <div class="sensor-details">
           <div class="sensor-detail">
             <div class="detail-label">Detection Range</div>
@@ -103,7 +183,7 @@
       <!-- Card 2: Temperature Sensor -->
       <div class="card">
         <div class="card-header">
-          <h2>Temperature Sensor</h2>
+          <h2>Temperature Sensor Readings</h2>
           <i class="fas fa-thermometer-half card-icon"></i>
         </div>
         <div class="sensor-value" id="tempValue">28.5°C</div>
@@ -220,10 +300,81 @@
         </div>
       </div>
 
-      <!-- Graph Card: Real-Time Sensor Data -->
-      <div class="card graph-card">
+      <!-- Card 6: MPU6050 Motion Sensor - SPLIT INTO TWO BOXES -->
+      <div class="card mpu-card-large">
         <div class="card-header">
-          <h2>Real-Time Sensor Data</h2>
+          <h2>MPU 6050 Motion Sensor</h2>
+          <i class="fas fa-compass card-icon"></i>
+        </div>
+        <div class="mpu-status-indicator">
+          <div class="mpu-status-badge" id="mpuStatus">
+            <i class="fas fa-shield-alt"></i>
+            <span id="mpuStatusText">Stable</span>
+          </div>
+          <div class="mpu-alert-badge" id="mpuAlert">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span>Motion Detected!</span>
+          </div>
+        </div>
+        
+        <div class="mpu-split-grid">
+          <!-- Left Box: Gyroscope -->
+          <div class="mpu-box gyro-box">
+            <h3><i class="fas fa-sync-alt"></i> Gyroscope</h3>
+            <div class="mpu-values">
+              <div class="mpu-axis">
+                <span class="axis-label">X:</span>
+                <span class="axis-value" id="gyroX">0.00 °/s</span>
+              </div>
+              <div class="mpu-axis">
+                <span class="axis-label">Y:</span>
+                <span class="axis-value" id="gyroY">0.00 °/s</span>
+              </div>
+              <div class="mpu-axis">
+                <span class="axis-label">Z:</span>
+                <span class="axis-value" id="gyroZ">0.00 °/s</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Right Box: Accelerometer -->
+          <div class="mpu-box accel-box">
+            <h3><i class="fas fa-tachometer-alt"></i> Accelerometer</h3>
+            <div class="mpu-values">
+              <div class="mpu-axis">
+                <span class="axis-label">X:</span>
+                <span class="axis-value" id="accelX">0.00 m/s²</span>
+              </div>
+              <div class="mpu-axis">
+                <span class="axis-label">Y:</span>
+                <span class="axis-value" id="accelY">0.00 m/s²</span>
+              </div>
+              <div class="mpu-axis">
+                <span class="axis-label">Z:</span>
+                <span class="axis-value" id="accelZ">9.81 m/s²</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="mpu-metrics">
+          <div class="mpu-metric">
+            <i class="fas fa-thermometer-half"></i>
+            <span>Temperature:</span>
+            <strong id="mpuTemp">25.4°C</strong>
+          </div>
+          <div class="mpu-metric">
+            <i class="fas fa-wave-square"></i>
+            <span>Vibration Level:</span>
+            <strong id="vibrationLevel">Low</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Graph Card: Real-Time Sensor Data - FULL WIDTH -->
+      <div class="card graph-card-full">
+        <div class="card-header">
+          <h2>Real-Time Sensor Data Graph</h2>
           <i class="fas fa-chart-line card-icon"></i>
         </div>
         <div class="graph-container">
@@ -491,6 +642,93 @@
         <div class="settings-actions">
           <button class="btn-save"><i class="fas fa-save"></i> Save Settings</button>
           <button class="btn-reset"><i class="fas fa-undo"></i> Reset to Default</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating Action Button (Right Side) -->
+  <div class="floating-actions">
+    <button class="floating-btn feedback-btn" id="feedbackBtn" title="Send Feedback">
+      <div class="feedback-emoji-container">
+        <!-- Yellow Smiley Face -->
+        <div class="emoji-circle">
+          <div class="emoji-face-inner">
+            <!-- Eyes -->
+            <div class="emoji-eyes">
+              <div class="emoji-eye left-eye">
+                <div class="emoji-pupil"></div>
+                <div class="eye-shine"></div>
+              </div>
+              <div class="emoji-eye right-eye">
+                <div class="emoji-pupil"></div>
+                <div class="eye-shine"></div>
+              </div>
+            </div>
+            <!-- Big Smile -->
+            <div class="emoji-big-smile">
+              <div class="smile-inner"></div>
+            </div>
+          </div>
+        </div>
+        <!-- Speech Bubble -->
+        <div class="speech-bubble">
+          <div class="bubble-lines">
+            <span class="bubble-line line-1"></span>
+            <span class="bubble-line line-2"></span>
+            <span class="bubble-line line-3"></span>
+          </div>
+          <div class="bubble-tail"></div>
+        </div>
+      </div>
+    </button>
+  </div>
+
+  <!-- Feedback Modal -->
+  <div class="modal" id="feedbackModal">
+    <div class="modal-content feedback-modal-content">
+      <div class="modal-header">
+        <h2><i class="fas fa-comment-dots"></i> Send Feedback</h2>
+        <span class="close-modal" id="closeFeedbackModal">&times;</span>
+      </div>
+      <div class="modal-body">
+        <p class="feedback-description">We'd love to hear from you! Share your thoughts, suggestions, or report issues.</p>
+        <form id="feedbackForm">
+          <div class="form-group">
+            <label for="feedbackName">Your Name</label>
+            <input type="text" id="feedbackName" placeholder="Enter your name" required>
+          </div>
+          <div class="form-group">
+            <label for="feedbackEmail">Your Email</label>
+            <input type="email" id="feedbackEmail" placeholder="your.email@example.com" required>
+          </div>
+          <div class="form-group">
+            <label for="feedbackType">Feedback Type</label>
+            <select id="feedbackType" required>
+              <option value="">Select type...</option>
+              <option value="Suggestion">💡 Suggestion</option>
+              <option value="Bug Report">🐛 Bug Report</option>
+              <option value="Feature Request">✨ Feature Request</option>
+              <option value="Compliment">👍 Compliment</option>
+              <option value="Other">📝 Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="feedbackMessage">Message</label>
+            <textarea id="feedbackMessage" rows="6" placeholder="Tell us what's on your mind..." required></textarea>
+          </div>
+          <div class="feedback-actions">
+            <button type="submit" class="btn-submit-feedback">
+              <i class="fas fa-paper-plane"></i> Send Feedback
+            </button>
+            <button type="button" class="btn-cancel-feedback" id="cancelFeedback">
+              Cancel
+            </button>
+          </div>
+        </form>
+        <div class="feedback-status" id="feedbackStatus">
+          <i class="fas fa-check-circle"></i>
+          <span id="feedbackStatusText">Feedback sent successfully!</span>
         </div>
       </div>
     </div>
