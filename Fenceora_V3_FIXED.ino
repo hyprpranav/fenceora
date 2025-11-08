@@ -131,6 +131,11 @@ float batteryLevel = 85.0;
 String rtcTime = "2025-11-04T07:00:00";
 unsigned long startTimeSeconds = 0;
 
+// MPU6050 Data (Global variables for dashboard display)
+float gyroX = 0.0, gyroY = 0.0, gyroZ = 0.0;
+float accelX = 0.0, accelY = 0.0, accelZ = 0.0;
+float mpuTemperature = 0.0;
+
 // Capacitive Sensor Debouncing Variables
 int capacitiveSensorState = LOW;
 int lastCapacitiveReading = LOW;
@@ -214,6 +219,21 @@ void handleApiRequest() {
   tamper["motion"] = tamperMotion;
   tamper["ir"] = tamperIR;
   doc["animal_dist"] = animalDistance;
+  
+  // --- 5b. MPU6050 Data (Gyroscope & Accelerometer) ---
+  JsonObject mpu6050 = doc.createNestedObject("mpu6050");
+  
+  JsonObject gyro = mpu6050.createNestedObject("gyro");
+  gyro["x"] = gyroX;
+  gyro["y"] = gyroY;
+  gyro["z"] = gyroZ;
+  
+  JsonObject accel = mpu6050.createNestedObject("accel");
+  accel["x"] = accelX;
+  accel["y"] = accelY;
+  accel["z"] = accelZ;
+  
+  mpu6050["temperature"] = mpuTemperature;
   
   // --- 6. Time (ISO8601 format) ---
   DateTime now = rtc.now();
@@ -368,9 +388,26 @@ void readAllSensors() {
     // Keep previous values instead of crashing
   }
 
-  // --- 4. MPU-6050 (Tamper) ---
+  // --- 4. MPU-6050 (Tamper & Motion Detection) ---
   sensors_event_t a, g, mpu_temp;
   if (mpu.getEvent(&a, &g, &mpu_temp)) {
+    // Store gyroscope values (degrees/second)
+    gyroX = g.gyro.x;
+    gyroY = g.gyro.y;
+    gyroZ = g.gyro.z;
+    
+    // Store accelerometer values (m/s²)
+    accelX = a.acceleration.x;
+    accelY = a.acceleration.y;
+    accelZ = a.acceleration.z;
+    
+    // Store MPU temperature
+    mpuTemperature = mpu_temp.temperature;
+    
+    // Debug output for MPU6050
+    Serial.printf("MPU6050: Gyro(%.2f, %.2f, %.2f)°/s | Accel(%.2f, %.2f, %.2f)m/s² | Temp=%.1f°C\n", 
+                  gyroX, gyroY, gyroZ, accelX, accelY, accelZ, mpuTemperature);
+    
     // Simple motion check: if acceleration > 15 m/s²
     if (abs(a.acceleration.x) > 15 || abs(a.acceleration.y) > 15 || abs(a.acceleration.z) > 15) {
       if (!tamperMotion) {
@@ -390,19 +427,29 @@ void readAllSensors() {
     } else {
       tamperMotion = false;
     }
+  } else {
+    Serial.println("⚠️ Failed to read from MPU6050!");
   }
 
   // --- 5. Ultrasonic (Animal Detection) ---
   digitalWrite(US_TRIG_PIN, LOW);
-  delayMicroseconds(2);
+  delayMicroseconds(5);  // Increased stabilization time
   digitalWrite(US_TRIG_PIN, HIGH);
-  delayMicroseconds(10);
+  delayMicroseconds(12);  // Slightly longer trigger pulse
   digitalWrite(US_TRIG_PIN, LOW);
-  long duration = pulseIn(US_ECHO_PIN, HIGH, 50000);
-  float newDistance = duration * 0.034 / 2;
+  
+  // Wait for echo with timeout (30ms = ~5m range)
+  long duration = pulseIn(US_ECHO_PIN, HIGH, 30000);
+  
+  // Calculate distance in cm (speed of sound = 343 m/s = 0.0343 cm/μs)
+  // Distance = (duration/2) * 0.0343
+  float newDistance = (duration * 0.0343) / 2.0;
+  
+  // Debug output for ultrasonic sensor
+  Serial.printf("Ultrasonic: duration=%ld μs, distance=%.1f cm\n", duration, newDistance);
   
   // Update distance and trigger buzzer if animal detected
-  if (newDistance > 1 && newDistance < 400) { // Valid range: 1cm to 400cm
+  if (duration > 0 && newDistance >= 2 && newDistance <= 400) { // Valid range: 2cm to 400cm
     animalDistance = newDistance;
     
     // If animal is within 200cm, log it and activate buzzer
@@ -481,20 +528,16 @@ void handleRfid() {
       // Open servo
       Serial.println("✓ Authorized Card - Opening Servo to 90°");
       addRfidLog("fa-unlock", "✓ Authorized Card - UNLOCKING...");
-      for (int pos = 0; pos <= 90; pos += 5) {
-        lockServo.write(pos);
-        delay(15); // Smooth movement
-      }
+      lockServo.write(90);  // Move to 90 degrees immediately
+      delay(500);  // Wait for servo to complete movement
       isServoOpen = true;
       Serial.println("Servo is now OPEN (90°)");
     } else {
       // Close servo
       Serial.println("✓ Authorized Card - Closing Servo to 0°");
       addRfidLog("fa-lock", "✓ Authorized Card - LOCKING...");
-      for (int pos = 90; pos >= 0; pos -= 5) {
-        lockServo.write(pos);
-        delay(15); // Smooth movement
-      }
+      lockServo.write(0);  // Move to 0 degrees immediately
+      delay(500);  // Wait for servo to complete movement
       isServoOpen = false;
       Serial.println("Servo is now CLOSED (0°)");
     }
@@ -694,9 +737,13 @@ void setup() {
   // Servo (Allow allocation of all timers for ESP32)
   ESP32PWM::allocateTimer(0);
   ESP32PWM::allocateTimer(1);
+  ESP32PWM::allocateTimer(2);
+  ESP32PWM::allocateTimer(3);
   lockServo.setPeriodHertz(50);    // Standard 50 Hz servo
-  lockServo.attach(SERVO_PIN, 500, 2400); // Pin, min pulse width, max pulse width (microseconds)
+  lockServo.attach(SERVO_PIN, 1000, 2000); // Pin, min pulse width, max pulse width (microseconds)
+  delay(100); // Give servo time to attach
   lockServo.write(0); // Start in closed position
+  delay(500); // Wait for servo to move to initial position
   isServoOpen = false;
   Serial.println("✓ Servo OK (Initialized at 0° - Locked)");
 
