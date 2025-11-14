@@ -1850,6 +1850,44 @@ body.light-theme .mpu-metric {
   margin-right: 8px;
 }
 
+/* Code Section Styles */
+.code-section {
+  margin-bottom: 30px;
+}
+
+.code-section h4 {
+  color: var(--primary);
+  margin-bottom: 10px;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.code-block {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(0, 217, 255, 0.3);
+  border-radius: 8px;
+  padding: 15px;
+  overflow-x: auto;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.code-block pre {
+  margin: 0;
+  font-family: 'Courier New', Consolas, monospace;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #e0e0e0;
+  white-space: pre;
+  overflow-x: auto;
+}
+
+.code-block code {
+  color: #00ff88;
+  text-shadow: 0 0 5px rgba(0, 255, 136, 0.3);
+}
+
 /* Notification Styles */
 .notification-item {
   display: flex;
@@ -2663,6 +2701,25 @@ body.light-theme .help-contact {
 
 body.light-theme .help-contact i {
   color: #667eea;
+}
+
+/* Code Section Styles for Light Theme */
+body.light-theme .code-section h4 {
+  color: #00c896;
+}
+
+body.light-theme .code-block {
+  background: rgba(102, 126, 234, 0.08);
+  border: 1px solid rgba(0, 200, 150, 0.3);
+}
+
+body.light-theme .code-block pre {
+  color: #2c3e50;
+}
+
+body.light-theme .code-block code {
+  color: #00a36c;
+  text-shadow: 0 0 5px rgba(0, 200, 150, 0.2);
 }
 
 /* Notification Styles for Light Theme */

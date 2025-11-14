@@ -28,7 +28,8 @@ const EMAIL_CONFIG = {
     receivers: [
       'harishwarharishwar47@gmail.com',
       'hemanathan8337@gmail.com',
-      'harishpranavs259@gmail.com',
+      'harishspranav2006@gmail.com',
+      'ampora52@gmail.com' ,
       'hariprasanthgk1@gmail.com'
     ]
   },

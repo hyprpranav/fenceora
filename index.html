@@ -410,6 +410,7 @@
         <div class="about-tabs">
           <button class="tab-btn active" data-tab="about">About FENCEORA</button>
           <button class="tab-btn" data-tab="help">Help & Guidance</button>
+          <button class="tab-btn" data-tab="code">Code</button>
         </div>
 
         <div id="about-tab" class="tab-content active">
@@ -492,6 +493,85 @@
             <h4>Need More Help?</h4>
             <p><strong>Development Team:</strong> H^4 HYPERS</p>
             <p><i class="fas fa-envelope"></i> Email: fenceora.h4@gmail.com</p>
+          </div>
+        </div>
+
+        <div id="code-tab" class="tab-content">
+          <h3>Scilab Experiment Codes</h3>
+          <p>Copy and paste the following Scilab codes for your experiments:</p>
+
+          <div class="code-section">
+            <h4>Experiment 5: One Dimensional Wave Equation</h4>
+            <div class="code-block">
+              <pre><code>clear;
+clc;
+n=1:2:100;
+l=5;//distance =5
+x = 3; //in between 0 to l
+k = 2; //spring constant
+t = 0.5;//t=0.5 seconds
+a=1;//constant =1
+sinx = sin(n*%pi*x/l);
+cosx = cos(n*%pi*a*t/l);
+I = sinx.*cosx;
+N = n.^3;
+I = I./N
+z = sum(I);
+y =((8*k*(l^2))/(%pi^3))*z//Final Solution
+disp("Solution of one dimensional wave equation is : y(3,0.5)=",y)</code></pre>
+            </div>
+          </div>
+
+          <div class="code-section">
+            <h4>Experiment 6: One Dimensional Heat Equation</h4>
+            <div class="code-block">
+              <pre><code>clear;
+clc;
+l=5;//length of the rod=5
+x=3;//in between 0 to 5
+t=0.5;//time = 0.5 seconds
+alpha=1;//constant=1
+//cosx = cos(n*%pi*x/l);
+//expt = -(alpha^2)(n^2)(%pi^2)*t/(l^2);
+//temp = -4*(l^2)/((%pi^2))
+u=(l^2)/6;
+for n=2:2:100
+ u= u+(-4*(l^2)/((%pi^2)(n^2)))*cos(n%pi*x/l)exp(-(alpha^2)(n^2)*(%pi^2)*t/(l^2));
+end
+ disp('One Dimensional Heat Equation Final Solution u(3,0.5)=',u)</code></pre>
+            </div>
+          </div>
+
+          <div class="code-section">
+            <h4>Experiment 7: Z-Transform of Finite Discrete Sequence</h4>
+            <div class="code-block">
+              <pre><code>clear all;
+clc;
+x=[1,0,3,-1,2];
+//input discrete sequence
+z=poly(0,'z');
+disp('z-transform of a finite discrete sequence X(z)=')
+for n=0:length(x)-1
+ XZ(n+1)=x(n+1)*(1/z)^n;
+ disp(XZ(n+1))
+end
+//result</code></pre>
+            </div>
+          </div>
+
+          <div class="code-section">
+            <h4>Experiment 8: Partial Fraction Expansion</h4>
+            <div class="code-block">
+              <pre><code>clear;
+clc;
+z = poly(0,'z');
+X = pfss(1/(1-3.5*z^-1+3*z^-2));
+XZ1 = syslin('d',X(1))
+XZ2 = syslin('d',X(2))
+disp("Partial Fraction Result is")
+disp('X1(z)=',XZ1)
+disp('X2(z)=',XZ2)</code></pre>
+            </div>
           </div>
         </div>
       </div>
