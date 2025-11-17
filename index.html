@@ -497,80 +497,332 @@
         </div>
 
         <div id="code-tab" class="tab-content">
-          <h3>Scilab Experiment Codes</h3>
-          <p>Copy and paste the following Scilab codes for your experiments:</p>
+          <h3>ESP32 Testing & Main Codes</h3>
+          <p>Individual sensor testing codes and complete Fenceora system code:</p>
+
+          <div class="download-section" style="margin-bottom: 30px;">
+            <a href="Fenceora_V3_FIXED.ino" download="Fenceora_V3_FIXED.ino" class="btn-download-code">
+              <i class="fas fa-download"></i> Download Complete ESP32 Fenceora Code
+            </a>
+            <p style="margin-top: 10px; font-size: 0.9rem; color: var(--text-secondary);">
+              This is the main system code with all sensors integrated.
+            </p>
+          </div>
 
           <div class="code-section">
-            <h4>Experiment 5: One Dimensional Wave Equation</h4>
+            <h4><i class="fas fa-hand-paper"></i> Test 1: Capacitive Sensor (GPIO 25)</h4>
             <div class="code-block">
-              <pre><code>clear;
-clc;
-n=1:2:100;
-l=5;//distance =5
-x = 3; //in between 0 to l
-k = 2; //spring constant
-t = 0.5;//t=0.5 seconds
-a=1;//constant =1
-sinx = sin(n*%pi*x/l);
-cosx = cos(n*%pi*a*t/l);
-I = sinx.*cosx;
-N = n.^3;
-I = I./N
-z = sum(I);
-y =((8*k*(l^2))/(%pi^3))*z//Final Solution
-disp("Solution of one dimensional wave equation is : y(3,0.5)=",y)</code></pre>
+              <pre><code>/*
+ * CORRECTED Test code for PNP Capacitive Sensor
+ * This version adds "debouncing" to prevent delays caused
+ * by flooding the serial monitor with noise.
+ */
+
+// Use any GPIO pin. Pin 25 is a good choice.
+const int SENSOR_PIN = 25; 
+
+// --- Variables for Debouncing ---
+int sensorState = LOW;         // The STABLE state we print
+int lastReading = LOW;         // The last raw reading from the pin
+unsigned long lastDebounceTime = 0; // The last time the pin flickered
+unsigned long debounceDelay = 50;   // Wait 50ms to confirm the change
+// --------------------------------
+
+void setup() {
+  Serial.begin(115200);
+  delay(500);
+  Serial.println("\n--- CORRECTED Capacitive Sensor Test (Debounced) ---");
+  Serial.println("This version will have no delay.");
+  Serial.println("Monitoring for electric field...");
+
+  pinMode(SENSOR_PIN, INPUT);
+}
+
+void loop() {
+  // 1. Read the sensor's current (possibly noisy) state
+  int currentReading = digitalRead(SENSOR_PIN);
+
+  // 2. Check if the reading is different from the last raw reading
+  //    (This catches the start of any flickers)
+  if (currentReading != lastReading) {
+    // If it changed, reset the debounce timer
+    lastDebounceTime = millis();
+  }
+
+  // 3. Wait until the debounce delay (50ms) has passed
+  if ((millis() - lastDebounceTime) > debounceDelay) {
+    
+    // 4. After 50ms, check if this new reading is STABLE
+    //    and also different from the last STABLE state we printed.
+    if (currentReading != sensorState) {
+      sensorState = currentReading; // This is the new, confirmed state
+      
+      // 5. Print the new, confirmed state ONCE
+      if (sensorState == HIGH) {
+        Serial.println("--- DETECTED! --- (Electric field or object found)");
+      } else {
+        Serial.println("Clear (No field detected)");
+      }
+    }
+  }
+
+  // 6. Save the raw reading for the next loop
+  lastReading = currentReading;
+}</code></pre>
             </div>
           </div>
 
           <div class="code-section">
-            <h4>Experiment 6: One Dimensional Heat Equation</h4>
+            <h4><i class="fas fa-id-card"></i> Test 2: RFID & Servo Motor (SS=5, RST=27, Servo=15)</h4>
             <div class="code-block">
-              <pre><code>clear;
-clc;
-l=5;//length of the rod=5
-x=3;//in between 0 to 5
-t=0.5;//time = 0.5 seconds
-alpha=1;//constant=1
-//cosx = cos(n*%pi*x/l);
-//expt = -(alpha^2)(n^2)(%pi^2)*t/(l^2);
-//temp = -4*(l^2)/((%pi^2))
-u=(l^2)/6;
-for n=2:2:100
- u= u+(-4*(l^2)/((%pi^2)(n^2)))*cos(n%pi*x/l)exp(-(alpha^2)(n^2)*(%pi^2)*t/(l^2));
-end
- disp('One Dimensional Heat Equation Final Solution u(3,0.5)=',u)</code></pre>
+              <pre><code>#include &lt;SPI.h&gt;
+#include &lt;MFRC522.h&gt;
+#include &lt;ESP32Servo.h&gt;
+
+// === PIN DEFINITIONS ===
+#define SERVO_PIN 15
+#define RFID_SS_PIN 5   // SDA (SS)
+#define RFID_RST_PIN 27 // RST
+
+// === GLOBAL OBJECTS ===
+Servo myServo;
+MFRC522 rfid(RFID_SS_PIN, RFID_RST_PIN);
+
+// === YOUR MASTER CARD UID ===
+byte correctUID[4] = {0xD3, 0x2E, 0xE4, 0x2C}; // &lt;-- UPDATED
+
+// === STATE VARIABLE ===
+// We use this to remember if the lock is open or closed
+bool isLocked = true;
+
+void setup() {
+  Serial.begin(115200);
+  SPI.begin();       // Init SPI bus
+  rfid.PCD_Init(); // Init MFRC522
+  
+  // Setup the servo
+  ESP32PWM::allocateTimer(0);
+  myServo.attach(SERVO_PIN);
+  
+  // Start in the "locked" position
+  myServo.write(0); 
+  
+  Serial.println("RFID + Servo Toggle Test");
+  Serial.println("Scan your master card to toggle the lock (0 &lt;-&gt; 180).");
+}
+
+void loop() {
+  // 1. Look for a new RFID card
+  if ( ! rfid.PICC_IsNewCardPresent()) {
+    return; // No card found, exit loop
+  }
+
+  // 2. Try to read the card's serial number
+  if ( ! rfid.PICC_ReadCardSerial()) {
+    return; // Failed to read, exit loop
+  }
+
+  Serial.print("Card Scanned. UID: ");
+  for (byte i = 0; i &lt; rfid.uid.size; i++) {
+    Serial.print(rfid.uid.uidByte[i], HEX);
+    Serial.print(" ");
+  }
+  Serial.println();
+
+  // 3. Check if this is the correct card
+  bool uidMatch = true;
+  for (byte i = 0; i &lt; rfid.uid.size; i++) {
+    if (rfid.uid.uidByte[i] != correctUID[i]) {
+      uidMatch = false;
+      break;
+    }
+  }
+
+  // 4. Main Toggle Logic
+  if (uidMatch) {
+    Serial.println("Access GRANTED.");
+    
+    // Toggle the state
+    if (isLocked) {
+      // It's locked, so unlock it
+      Serial.println("Unlocking... (Moving to 180)");
+      myServo.write(180);
+      isLocked = false; // Remember the new state
+    } else {
+      // It's unlocked, so lock it
+      Serial.println("Locking... (Moving to 0)");
+      myServo.write(0);
+      isLocked = true; // Remember the new state
+    }
+    
+  } else {
+    Serial.println("Access DENIED. Wrong card.");
+  }
+
+  // 5. Halt the card to allow a new read
+  rfid.PICC_HaltA();
+  rfid.PCD_StopCrypto1();
+  
+  // IMPORTANT: Add a delay to prevent the card from
+  // being read 100 times in one second.
+  delay(1000); 
+}</code></pre>
             </div>
           </div>
 
           <div class="code-section">
-            <h4>Experiment 7: Z-Transform of Finite Discrete Sequence</h4>
+            <h4><i class="fas fa-ruler-combined"></i> Test 3: Ultrasonic Sensor (TRIG=33, ECHO=32)</h4>
             <div class="code-block">
-              <pre><code>clear all;
-clc;
-x=[1,0,3,-1,2];
-//input discrete sequence
-z=poly(0,'z');
-disp('z-transform of a finite discrete sequence X(z)=')
-for n=0:length(x)-1
- XZ(n+1)=x(n+1)*(1/z)^n;
- disp(XZ(n+1))
-end
-//result</code></pre>
+              <pre><code>// Define the pins for the Ultrasonic Sensor
+const int TRIG_PIN = 33;
+const int ECHO_PIN = 32;
+
+// Variables to store duration and distance
+long duration;
+float distanceCm;
+
+void setup() {
+  Serial.begin(115200); // Start serial communication
+  
+  // Set pin modes
+  pinMode(TRIG_PIN, OUTPUT); // Trig pin sends a signal out
+  pinMode(ECHO_PIN, INPUT);  // Echo pin reads a signal in
+  
+  Serial.println("Ultrasonic Sensor Test");
+  Serial.println("======================");
+  Serial.println("Move your hand in front of the sensor.");
+}
+
+void loop() {
+  // --- 1. Send the Trigger Pulse ---
+  
+  // Ensure the trigger pin is low for a clean pulse
+  digitalWrite(TRIG_PIN, LOW);
+  delayMicroseconds(2);
+  
+  // Send the 10-microsecond trigger pulse
+  digitalWrite(TRIG_PIN, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(TRIG_PIN, LOW);
+  
+  // --- 2. Read the Echo ---
+  
+  // Measure the time the echo pin stays HIGH (the pulse travel time)
+  // pulseIn() waits for the pin to go HIGH, times how long it stays
+  // HIGH, then waits for it to go LOW.
+  duration = pulseIn(ECHO_PIN, HIGH);
+  
+  // --- 3. Calculate the Distance ---
+  
+  // Speed of sound = 343 m/s = 0.0343 cm/microsecond
+  // The sound travels to the object AND back, so we divide by 2.
+  // Distance = (Travel Time * Speed of Sound) / 2
+  distanceCm = duration * 0.0343 / 2;
+
+  // --- 4. Print the Result ---
+  
+  Serial.print("Distance: ");
+  Serial.print(distanceCm);
+  Serial.println(" cm");
+
+  delay(500); // Wait half a second before the next reading
+}</code></pre>
             </div>
           </div>
 
           <div class="code-section">
-            <h4>Experiment 8: Partial Fraction Expansion</h4>
+            <h4><i class="fas fa-compass"></i> Test 4: RTC & MPU6050 (I2C SDA=21, SCL=22)</h4>
             <div class="code-block">
-              <pre><code>clear;
-clc;
-z = poly(0,'z');
-X = pfss(1/(1-3.5*z^-1+3*z^-2));
-XZ1 = syslin('d',X(1))
-XZ2 = syslin('d',X(2))
-disp("Partial Fraction Result is")
-disp('X1(z)=',XZ1)
-disp('X2(z)=',XZ2)</code></pre>
+              <pre><code>#include &lt;Wire.h&gt;
+#include &lt;RTClib.h&gt;
+#include &lt;Adafruit_MPU6050.h&gt;
+#include &lt;Adafruit_Sensor.h&gt;
+
+// --- Create objects for both I2C sensors ---
+RTC_DS3231 rtc;
+Adafruit_MPU6050 mpu;
+
+// --- Define your custom I2C pins ---
+#define I2C_SDA_PIN 21
+#define I2C_SCL_PIN 22
+
+void setup() {
+  Serial.begin(115200);
+  while (!Serial) {
+    delay(10); // Wait for serial console
+  }
+  Serial.println("\n--- Combined RTC + MPU-6050 (Addr 0x69) Test ---");
+
+  // --- 1. Initialize the I2C Bus ---
+  // Start Wire on your specific pins
+  Wire.begin(I2C_SDA_PIN, I2C_SCL_PIN);
+
+  // --- 2. Initialize the RTC ---
+  // The rtc.begin() function will find the RTC at its default address (0x68)
+  if (!rtc.begin()) {
+    Serial.println("***********************************");
+    Serial.println("Couldn't find RTC! Check wiring.");
+    Serial.println("***********************************");
+    while (1) delay(10);
+  }
+  Serial.println("RTC Found!");
+
+  // --- 3. Initialize the MPU-6050 ---
+  // We MUST tell the library to look for the MPU at address 0x69
+  // (because you connected AD0 to 3.3V)
+  if (!mpu.begin(0x69)) { 
+    Serial.println("***********************************");
+    Serial.println("Failed to find MPU6050 chip at address 0x69.");
+    Serial.println("Check AD0 pin (must be connected to 3.3V).");
+    Serial.println("***********************************");
+    while (1) delay(10);
+  }
+  Serial.println("MPU-6050 Found at 0x69!");
+
+  // --- 4. Set the time (only runs if needed) ---
+  if (rtc.lostPower()) {
+    Serial.println("RTC lost power, setting the time!");
+    // Sets the time to the time this sketch was compiled
+    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+  }
+  
+  Serial.println("\n--- Starting Data Loop ---");
+}
+
+void loop() {
+  
+  // --- PART 1: Read from RTC (at address 0x68) ---
+  DateTime now = rtc.now();
+  Serial.print(now.year());
+  Serial.print('/');
+  Serial.print(now.month());
+  Serial.print('/');
+  Serial.print(now.day());
+  Serial.print(" ");
+  if (now.hour() &lt; 10) Serial.print('0');
+  Serial.print(now.hour());
+  Serial.print(':');
+  if (now.minute() &lt; 10) Serial.print('0');
+  Serial.print(now.minute());
+  Serial.print(':');
+  if (now.second() &lt; 10) Serial.print('0');
+  Serial.print(now.second());
+  Serial.print("  |  "); // Separator
+
+  // --- PART 2: Read from MPU-6050 (at address 0x69) ---
+  sensors_event_t a, g, temp;
+  mpu.getEvent(&a, &g, &temp);
+
+  Serial.print("Accel X: ");
+  Serial.print(a.acceleration.x, 1); // Print with 1 decimal place
+  Serial.print(", Y: ");
+  Serial.print(a.acceleration.y, 1);
+  Serial.print(", Z: ");
+  Serial.print(a.acceleration.z, 1);
+  Serial.println(" m/s^2");
+
+  delay(1000); // Wait one second
+}</code></pre>
             </div>
           </div>
         </div>

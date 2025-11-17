@@ -1888,6 +1888,32 @@ body.light-theme .mpu-metric {
   text-shadow: 0 0 5px rgba(0, 255, 136, 0.3);
 }
 
+/* Download Code Button */
+.btn-download-code {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #00d9ff 0%, #00a8cc 100%);
+  color: #ffffff;
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 217, 255, 0.3);
+}
+
+.btn-download-code:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 217, 255, 0.5);
+  background: linear-gradient(135deg, #00e5ff 0%, #00bfef 100%);
+}
+
+.btn-download-code i {
+  font-size: 1.2rem;
+}
+
 /* Notification Styles */
 .notification-item {
   display: flex;
@@ -2720,6 +2746,17 @@ body.light-theme .code-block pre {
 body.light-theme .code-block code {
   color: #00a36c;
   text-shadow: 0 0 5px rgba(0, 200, 150, 0.2);
+}
+
+/* Download Code Button for Light Theme */
+body.light-theme .btn-download-code {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+body.light-theme .btn-download-code:hover {
+  background: linear-gradient(135deg, #7c8ef5 0%, #8b5cb8 100%);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
 }
 
 /* Notification Styles for Light Theme */
