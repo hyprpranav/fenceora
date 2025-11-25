@@ -299,26 +299,35 @@ async function fetchDataFromESP32() {
   }
 }
 
+// Previous sensor states for change detection
+let previousStates = {
+  capacitiveDetected: false,
+  currentDetected: false,
+  irDetected: false,
+  tamperDetected: false,
+  ultrasonicCritical: false
+};
+
 /**
  * Updates the Capacitive and Temperature sensor cards
  */
 function updateStatusCards(data) {
-  // 1. Capacitive Proximity Sensor
+  // 1. Capacitive Proximity Sensor (Electric Field Detection)
   const proximityValue = document.getElementById('proxValue');
   const proximityStatus = document.getElementById('proxStatus');
   const proximityUpdate = document.getElementById('proxUpdate');
   
-  // Use data from ESP32
-  proximityValue.textContent = data.fence.status; // e.g., "ACTIVE" or "CLEAR"
-  proximityUpdate.textContent = t('justNow');
-  
-  if (data.fence.status === "ACTIVE") {
+  // Use capacitiveDetected from new ESP32 API
+  if (data.capacitiveDetected) {
+    proximityValue.textContent = "ELECTRIC FIELD DETECTED";
     proximityStatus.textContent = t('currentDetected');
     proximityStatus.className = "status-badge status-alert";
   } else {
+    proximityValue.textContent = "CLEAR";
     proximityStatus.textContent = t('noCurrent');
     proximityStatus.className = "status-badge status-normal";
   }
+  proximityUpdate.textContent = t('justNow');
   
   // 2. Temperature Sensor with Unit Conversion
   const temperatureValue = document.getElementById('tempValue');
@@ -1258,68 +1267,88 @@ function checkForCriticalAlerts(data) {
   const now = new Date().toLocaleTimeString();
   const settings = JSON.parse(localStorage.getItem('fenceora_settings') || '{}');
   
-  // Check for fence current detection
-  if (data.fence.status === "ACTIVE") {
-    showWarning(
-      t('fenceCurrentDetected'),
-      t('electricFieldDetected'),
-      `${t('time')}: ${now} | ${t('voltage')}: ${data.solar.voltage}V`
-    );
-    
-    // Send email notification if enabled
-    if (settings.emailNotifications) {
-      sendAlertEmail('Fence Current Detected', 
-        `⚡ CRITICAL: Electric field detected on perimeter fence! Time: ${now}, Voltage: ${data.solar.voltage}V`);
-    }
-    return; // Show only one alert at a time
-  }
+  // === CRITICAL: Only trigger notification on STATE CHANGE (Normal → Detected) ===
   
-  // Check for tampering (IR sensor)
-  if (data.tamper.ir === true) {
+  // 1. Check CAPACITIVE SENSOR (Electric Field) - State Change Detection
+  if (data.capacitiveDetected && !previousStates.capacitiveDetected) {
+    console.log('🔔 CAPACITIVE: Normal → Detected (Triggering notification)');
     showWarning(
-      t('tamperingDetected'),
-      t('handDetected'),
-      `${t('time')}: ${now} | ${t('sensor')}: ${t('infrared')}`
+      '⚡ CAPACITIVE SENSOR ALERT',
+      'Electric field detected on fence!',
+      `${t('time')}: ${now} | Sensor: Capacitive`
     );
     
-    // Send email notification if enabled
+    if (settings.emailNotifications) {
+      sendAlertEmail('Capacitive Sensor Alert', 
+        `⚡ CRITICAL: Electric field detected on perimeter fence! Time: ${now}`);
+    }
+  }
+  previousStates.capacitiveDetected = data.capacitiveDetected;
+  
+  // 2. Check CURRENT SENSOR (ACS712) - State Change Detection
+  if (data.currentDetected && !previousStates.currentDetected) {
+    console.log('🔔 CURRENT: Normal → Detected (Triggering notification)');
+    showWarning(
+      '⚡ HIGH CURRENT DETECTED',
+      'Abnormal current flow detected!',
+      `${t('time')}: ${now} | Sensor: ACS712`
+    );
+    
+    if (settings.emailNotifications) {
+      sendAlertEmail('High Current Alert', 
+        `⚡ CRITICAL: High current detected in system! Time: ${now}`);
+    }
+  }
+  previousStates.currentDetected = data.currentDetected;
+  
+  // 3. Check IR SENSOR (Tampering) - State Change Detection
+  if (data.irDetected && !previousStates.irDetected) {
+    console.log('🔔 IR: Normal → Detected (Triggering notification)');
+    showWarning(
+      '🚨 TAMPERING DETECTED',
+      'Hand or object detected near device!',
+      `${t('time')}: ${now} | Sensor: Infrared`
+    );
+    
     if (settings.emailNotifications) {
       sendAlertEmail('Tampering Detected', 
-        `🚨 ALERT: Hand or object detected near device! Time: ${now}, Sensor: Infrared`);
+        `🚨 ALERT: Hand or object detected near device! Time: ${now}`);
     }
-    return;
   }
+  previousStates.irDetected = data.irDetected;
   
-  // Check for device movement (Motion sensor)
-  if (data.tamper.motion === true) {
+  // 4. Check TAMPER/GYROSCOPE (Motion) - State Change Detection
+  if (data.tamperDetected && !previousStates.tamperDetected) {
+    console.log('🔔 TAMPER: Normal → Detected (Triggering notification)');
     showWarning(
-      t('deviceMovement'),
-      t('someoneTryingMove'),
-      `${t('time')}: ${now} | ${t('sensor')}: ${t('accelerometer')}`
+      '⚠️ DEVICE MOVEMENT',
+      'Someone is trying to move the device!',
+      `${t('time')}: ${now} | Sensor: MPU6050 Gyroscope`
     );
     
-    // Send email notification if enabled
     if (settings.emailNotifications) {
       sendAlertEmail('Device Movement Detected', 
-        `⚠️ WARNING: Someone is trying to move the device! Time: ${now}, Sensor: MPU6050`);
+        `⚠️ WARNING: Device movement detected! Time: ${now}`);
     }
-    return;
   }
+  previousStates.tamperDetected = data.tamperDetected;
   
-  // Check for unauthorized RFID attempt
-  if (data.lastRfidStatus === "DENIED") {
+  // 5. Check ULTRASONIC (Critical Proximity) - State Change Detection
+  const ultrasonicCritical = (data.ultrasonic > 0 && data.ultrasonic < 30);
+  if (ultrasonicCritical && !previousStates.ultrasonicCritical) {
+    console.log('🔔 ULTRASONIC: Normal → Critical (Triggering notification)');
     showWarning(
-      t('unauthorizedAccess'),
-      t('unknownCard'),
-      `${t('time')}: ${now} | ${t('cardUID')}: ${data.lastRfidUID}`
+      '🚨 CRITICAL PROXIMITY',
+      `Object too close: ${data.ultrasonic} cm`,
+      `${t('time')}: ${now} | Sensor: Ultrasonic`
     );
     
-    // Send email notification if enabled
     if (settings.emailNotifications) {
-      sendAlertEmail('Unauthorized Access Attempt', 
-        `🔒 SECURITY: Unknown RFID card scanned! Time: ${now}, Card UID: ${data.lastRfidUID}`);
+      sendAlertEmail('Proximity Alert', 
+        `🚨 CRITICAL: Object detected at ${data.ultrasonic} cm! Time: ${now}`);
     }
   }
+  previousStates.ultrasonicCritical = ultrasonicCritical;
 }
 
 // Send alert email to all receivers
