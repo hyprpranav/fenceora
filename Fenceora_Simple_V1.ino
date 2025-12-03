@@ -1,24 +1,24 @@
 /*
  * FENCEORA - Simplified Smart Fence System
  * ESP32 Dev Board - Web Server Version
- * Version 1.0 - November 2025
+ * Version 2.0 - November 2025
  * 
  * FEATURES:
  * - WiFi Web Server (sends sensor data to frontend via API)
- * - RFID + Servo Access Control
+ * - RFID + Servo Access Control (NO NOTIFICATIONS FOR SERVO)
  * - Ultrasonic Proximity Detection
  * - IR Sensor Detection
  * - Current Sensor (ACS712) Detection
- * - Capacitive Sensor Detection
- * - MPU6050 Tamper/Gyroscope Detection
+ * - MPU6050 Gyroscope + Accelerometer + Tamper Detection
  * - Voltage Monitoring
  * - LED Status Indicator
  * - Buzzer Alarms
  * 
  * NOTIFICATION LOGIC:
- * - ESP32 only sends sensor values to frontend
+ * - ESP32 sends all sensor values to frontend via API
  * - Frontend monitors value changes and sends notifications
- * - Keeps ESP32 code simple and focused on sensor reading
+ * - RFID/Servo movements are tracked but NO notifications sent
+ * - Only security sensors (IR, Current, Tamper, Proximity) trigger notifications
  */
 
 #include <WiFi.h>
@@ -35,31 +35,45 @@
 // WIFI CONFIGURATION
 // ========================================
 const char* ssid = "Oppo A77s";           // Your WiFi name
-const char* password = "00000000";        // Your WiFi password
+const char* password = "9080061674";      // Your WiFi password
 
 // ========================================
-// PIN DEFINITIONS - ESP32 Dev Board
+// PIN DEFINITIONS - ESP32 Dev Board (UPDATED)
 // ========================================
-#define SS_PIN 5              // RFID SDA
-#define RST_PIN 27            // RFID RST
-#define SERVO_PIN 15          // Servo Motor
-#define TRIG_PIN 33           // Ultrasonic Trigger
-#define ECHO_PIN 32           // Ultrasonic Echo
-#define BUZZER_PIN 13         // Buzzer/Speaker
-#define LED_PIN 2             // Built-in LED (or use GPIO 2)
+// RFID PINS (SPI uses default pins: MISO=19, MOSI=23, SCK=18)
+#define RST_PIN 22            // RFID Reset Pin
+#define SS_PIN 21             // RFID Slave Select (SDA)
+
+// SERVO & BUZZER
+#define SERVO_PIN 13          // Servo Motor Signal
+#define BUZZER_PIN 27         // Buzzer
+
+// ULTRASONIC
+#define TRIG_PIN 12           // Ultrasonic Trigger
+#define ECHO_PIN 14           // Ultrasonic Echo
+
+// OTHER SENSORS
+#define CAPACITIVE_PIN 15     // Capacitive Touch Sensor (KEY INPUT)
+#define LED_PIN 2             // Built-in LED
 #define VOLTAGE_PIN 34        // Voltage Sensor (ADC1_CH6)
-#define IR_PIN 26             // IR Sensor
+#define IR_PIN 4              // IR Sensor
 #define CURRENT_PIN 35        // ACS712 Current Sensor (ADC1_CH7)
-#define CAPACITIVE_PIN 25     // Capacitive Sensor (NEW)
+
+// MPU6050 I2C PINS (Changed from 21/22 to avoid RFID conflict)
+#define MPU_SDA 26            // I2C SDA for MPU6050
+#define MPU_SCL 25            // I2C SCL for MPU6050
 
 // ========================================
 // CONFIGURATION
 // ========================================
 const int CRITICAL_DISTANCE_CM = 30; 
-const int WARNING_DISTANCE_CM = 50;  
 const long CRITICAL_ALARM_DURATION_MS = 3000; 
 const float TAMPER_THRESHOLD = 5.0;  
-byte authorizedUID[4] = {0xD3, 0x2E, 0xE4, 0x2C}; 
+
+// RFID & SERVO CONFIG
+const int LOCKED_POS = 0;
+const int UNLOCKED_POS = 90;
+const byte AUTHORIZED_UID[4] = {0xD3, 0x2E, 0xE4, 0x2C}; 
 
 // Voltage & Current Calibration
 const float VOLTAGE_CALIBRATION = 0.0041; 
@@ -77,9 +91,7 @@ Adafruit_MPU6050 mpu;
 // ========================================
 // STATE VARIABLES
 // ========================================
-const int OPEN_ANGLE = 90;
-const int CLOSED_ANGLE = 0;
-bool isServoOpen = false; 
+bool isLocked = true;         // True if servo is at LOCKED_POS
 float baseAx, baseAy, baseAz; 
 unsigned long alarmStartTime = 0;
 bool isCriticalAlarmActive = false; 
@@ -90,9 +102,9 @@ const long VOLTAGE_CHECK_INTERVAL = 30000; // 30 seconds
 struct SensorData {
   float voltage = 0.0;
   int ultrasonic = 0;
+  bool capacitiveDetected = false;
   bool irDetected = false;
   bool currentDetected = false;
-  bool capacitiveDetected = false;
   bool tamperDetected = false;
   float accelX = 0.0;
   float accelY = 0.0;
@@ -100,15 +112,9 @@ struct SensorData {
   float gyroX = 0.0;
   float gyroY = 0.0;
   float gyroZ = 0.0;
-  bool servoOpen = false;
+  bool servoLocked = true;    // Servo position (for tracking only, no notifications)
   String lastRFID = "None";
 } sensorData;
-
-// Capacitive Sensor Debouncing
-int capacitiveState = LOW;
-int lastCapReading = LOW;
-unsigned long lastCapDebounceTime = 0;
-const unsigned long CAP_DEBOUNCE_DELAY = 50;
 
 // ========================================
 // FUNCTION PROTOTYPES
@@ -122,15 +128,16 @@ void calibrateMPU();
 void calibrateCurrentSensor();
 void checkTamper();
 void checkProximity();
+void checkCapacitiveSensor();
 void checkIRSensor();
 void checkCurrentSensor();
-void checkCapacitiveSensor();
 void handleRFID();
 void updateCriticalAlarmState();
-void triggerBuzzer(int durationMs);
-void triggerDoubleBeep();
+void triggerCriticalAlarm(const char* message);
 void readInputVoltage();
 void blinkLED(int times);
+void dump_byte_array(byte *buffer, byte bufferSize);
+bool compareUID(byte *uid1, const byte *uid2, byte size);
 
 // ========================================
 // SETUP
@@ -143,9 +150,9 @@ void setup() {
   pinMode(TRIG_PIN, OUTPUT);
   pinMode(ECHO_PIN, INPUT);
   pinMode(BUZZER_PIN, OUTPUT);
+  pinMode(CAPACITIVE_PIN, INPUT);
   pinMode(IR_PIN, INPUT); 
   pinMode(CURRENT_PIN, INPUT);
-  pinMode(CAPACITIVE_PIN, INPUT);
   pinMode(LED_PIN, OUTPUT);
   digitalWrite(BUZZER_PIN, LOW);
   digitalWrite(LED_PIN, LOW);
@@ -160,17 +167,23 @@ void setup() {
   // Init Servo
   ESP32PWM::allocateTimer(0);
   servo.attach(SERVO_PIN);
-  servo.write(CLOSED_ANGLE); 
+  servo.write(LOCKED_POS); 
   
-  // Init I2C & MPU6050
-  Wire.begin(21, 22); 
-  if (!mpu.begin(0x69)) { // Using address 0x69 (AD0=HIGH)
-    Serial.println("⚠️ Failed to find MPU6050 at 0x69");
+  // Init I2C & MPU6050 (Using new pins to avoid RFID conflict)
+  Wire.begin(MPU_SDA, MPU_SCL); 
+  if (!mpu.begin()) {
+    Serial.println("⚠️ Failed to find MPU6050");
   } else {
-    Serial.println("✅ MPU6050 Found at 0x69");
+    Serial.println("✅ MPU6050 Found!");
     mpu.setAccelerometerRange(MPU6050_RANGE_8_G);
+    mpu.setGyroRange(MPU6050_RANGE_500_DEG);
     calibrateMPU();
   }
+  
+  // Init RFID (with antenna boost)
+  rfid.PCD_SetAntennaGain(rfid.RxGain_max);
+  Serial.print("RFID Firmware Version: ");
+  rfid.PCD_DumpVersionToSerial();
   
   // Calibrate Current Sensor
   calibrateCurrentSensor();
@@ -203,12 +216,16 @@ void loop() {
     lastVoltageCheckTime = millis(); 
   }
   
-  // Read all sensors
-  checkTamper();      
-  checkProximity(); 
-  checkIRSensor(); 
-  checkCurrentSensor();
-  checkCapacitiveSensor(); // NEW
+  // Read security sensors (only when alarm is not active)
+  if (!isCriticalAlarmActive) {
+    checkTamper();      
+    checkProximity();
+    checkCapacitiveSensor();
+    checkIRSensor(); 
+    checkCurrentSensor();
+  }
+  
+  // RFID access control (always active)
   handleRFID();       
   
   delay(50);
@@ -281,14 +298,14 @@ void handleSensorData() {
   // Add sensor values
   doc["voltage"] = sensorData.voltage;
   doc["ultrasonic"] = sensorData.ultrasonic;
+  doc["capacitiveDetected"] = sensorData.capacitiveDetected;
   doc["irDetected"] = sensorData.irDetected;
   doc["currentDetected"] = sensorData.currentDetected;
-  doc["capacitiveDetected"] = sensorData.capacitiveDetected;
   doc["tamperDetected"] = sensorData.tamperDetected;
-  doc["servoOpen"] = sensorData.servoOpen;
+  doc["servoLocked"] = sensorData.servoLocked;  // Track servo position (no notifications)
   doc["lastRFID"] = sensorData.lastRFID;
   
-  // MPU6050 values
+  // MPU6050 values (GYROSCOPE + ACCELEROMETER)
   JsonObject mpu = doc.createNestedObject("mpu");
   mpu["accelX"] = sensorData.accelX;
   mpu["accelY"] = sensorData.accelY;
@@ -310,57 +327,36 @@ void handleSensorData() {
 }
 
 // ========================================
-// CAPACITIVE SENSOR (NEW)
+// ALARM TRIGGER FUNCTION
 // ========================================
-void checkCapacitiveSensor() {
-  if (isCriticalAlarmActive) return;
+void triggerCriticalAlarm(const char* message) {
+  if (isCriticalAlarmActive) return; // Don't re-trigger
   
-  int currentReading = digitalRead(CAPACITIVE_PIN);
+  Serial.print("🚨 CRITICAL ALERT: ");
+  Serial.println(message);
   
-  if (currentReading != lastCapReading) {
-    lastCapDebounceTime = millis();
-  }
-  
-  if ((millis() - lastCapDebounceTime) > CAP_DEBOUNCE_DELAY) {
-    if (currentReading != capacitiveState) {
-      capacitiveState = currentReading;
-      
-      if (capacitiveState == HIGH) {
-        Serial.println("⚡ CAPACITIVE SENSOR DETECTED!");
-        sensorData.capacitiveDetected = true;
-        
-        // Trigger alarm
-        digitalWrite(BUZZER_PIN, HIGH);
-        digitalWrite(LED_PIN, HIGH);
-        alarmStartTime = millis();
-        isCriticalAlarmActive = true;
-      } else {
-        sensorData.capacitiveDetected = false;
-      }
-    }
-  }
-  
-  lastCapReading = currentReading;
+  digitalWrite(BUZZER_PIN, HIGH);
+  digitalWrite(LED_PIN, HIGH);
+  alarmStartTime = millis();
+  isCriticalAlarmActive = true;
 }
 
 // ========================================
 // CURRENT SENSOR
 // ========================================
 void calibrateCurrentSensor() {
-  Serial.print("Calibrating Current Sensor... ");
+  Serial.print("Calibrating Current Sensor (Ensure no load)... ");
   long total = 0;
   for(int i=0; i<100; i++) {
     total += analogRead(CURRENT_PIN);
     delay(5);
   }
   currentZeroPoint = total / 100;
-  Serial.print("Zero Point: ");
+  Serial.print("Zero Point Set at: ");
   Serial.println(currentZeroPoint);
 }
 
 void checkCurrentSensor() {
-  if (isCriticalAlarmActive) return;
-  
   long reading = 0;
   for(int i=0; i<10; i++) {
     reading += analogRead(CURRENT_PIN);
@@ -370,16 +366,24 @@ void checkCurrentSensor() {
   int difference = abs(avgReading - currentZeroPoint);
   
   if (difference > CURRENT_NOISE_THRESHOLD) {
-    Serial.print("⚡ HIGH CURRENT! Deviation: ");
-    Serial.println(difference);
-    
     sensorData.currentDetected = true;
-    digitalWrite(BUZZER_PIN, HIGH);
-    digitalWrite(LED_PIN, HIGH);
-    alarmStartTime = millis();
-    isCriticalAlarmActive = true;
+    triggerCriticalAlarm("High Current Detected!");
   } else {
     sensorData.currentDetected = false;
+  }
+}
+
+// ========================================
+// CAPACITIVE TOUCH SENSOR
+// ========================================
+void checkCapacitiveSensor() {
+  int capacitiveValue = digitalRead(CAPACITIVE_PIN);
+  
+  if (capacitiveValue == HIGH) {
+    sensorData.capacitiveDetected = true;
+    triggerCriticalAlarm("Capacitive Sensor Triggered!");
+  } else {
+    sensorData.capacitiveDetected = false;
   }
 }
 
@@ -387,18 +391,11 @@ void checkCurrentSensor() {
 // IR SENSOR
 // ========================================
 void checkIRSensor() {
-  if (isCriticalAlarmActive) return;
-  
   int irValue = digitalRead(IR_PIN);
   
   if (irValue == LOW) {
-    Serial.println("🚨 IR SENSOR TRIGGERED!");
-    
     sensorData.irDetected = true;
-    digitalWrite(BUZZER_PIN, HIGH);
-    digitalWrite(LED_PIN, HIGH);
-    alarmStartTime = millis();
-    isCriticalAlarmActive = true;
+    triggerCriticalAlarm("IR Sensor Object Detected!");
   } else {
     sensorData.irDetected = false;
   }
@@ -420,44 +417,32 @@ void readInputVoltage() {
 // ULTRASONIC SENSOR
 // ========================================
 void checkProximity() {
-  if (isCriticalAlarmActive) return; 
-  
   digitalWrite(TRIG_PIN, LOW); 
   delayMicroseconds(2);
   digitalWrite(TRIG_PIN, HIGH); 
   delayMicroseconds(10);
   digitalWrite(TRIG_PIN, LOW);
   
-  long duration = pulseIn(ECHO_PIN, HIGH, 30000);
+  long duration = pulseIn(ECHO_PIN, HIGH);
   int distance = duration * 0.034 / 2;
   
   sensorData.ultrasonic = distance;
   
   if (distance > 0 && distance < CRITICAL_DISTANCE_CM) {
-    Serial.print("🚨 CRITICAL PROXIMITY! ");
-    Serial.print(distance);
-    Serial.println(" cm");
-    
-    digitalWrite(BUZZER_PIN, HIGH);
-    digitalWrite(LED_PIN, HIGH);
-    alarmStartTime = millis();
-    isCriticalAlarmActive = true;
-  } 
-  else if (distance >= CRITICAL_DISTANCE_CM && distance < WARNING_DISTANCE_CM) {
-    if (digitalRead(BUZZER_PIN) == LOW) {
-      triggerDoubleBeep();
-    }
+    char msg[32];
+    snprintf(msg, sizeof(msg), "Proximity at %d cm!", distance);
+    triggerCriticalAlarm(msg);
   }
 }
 
 // ========================================
-// MPU6050 TAMPER DETECTION
+// MPU6050 TAMPER DETECTION (GYROSCOPE + ACCELEROMETER)
 // ========================================
 void checkTamper() {
   sensors_event_t a, g, temp;
   mpu.getEvent(&a, &g, &temp);
   
-  // Update sensor data
+  // Update sensor data (GYROSCOPE + ACCELEROMETER)
   sensorData.accelX = a.acceleration.x;
   sensorData.accelY = a.acceleration.y;
   sensorData.accelZ = a.acceleration.z;
@@ -465,92 +450,107 @@ void checkTamper() {
   sensorData.gyroY = g.gyro.y;
   sensorData.gyroZ = g.gyro.z;
   
+  // Check for significant movement (tamper detection)
   float delta = abs(a.acceleration.x - baseAx) + 
                 abs(a.acceleration.y - baseAy) + 
                 abs(a.acceleration.z - baseAz);
   
   if (delta > TAMPER_THRESHOLD) {
-    Serial.println("❌ TAMPER ALERT!");
     sensorData.tamperDetected = true;
-    triggerBuzzer(150); 
-    digitalWrite(LED_PIN, HIGH);
-    delay(100);
-    digitalWrite(LED_PIN, LOW);
+    triggerCriticalAlarm("Tamper Detected! Device is moving!");
   } else {
     sensorData.tamperDetected = false;
   }
 }
 
 // ========================================
-// RFID & SERVO
+// RFID & SERVO (NO NOTIFICATIONS, ONLY TRACKING)
 // ========================================
 void handleRFID() {
   if (!rfid.PICC_IsNewCardPresent() || !rfid.PICC_ReadCardSerial()) return;
+
+  // Read the current tag's UID
+  byte currentUID[4];
+  for (byte i = 0; i < 4; i++) {
+    currentUID[i] = rfid.uid.uidByte[i];
+  }
   
-  // Read UID
+  // Convert UID to string for tracking
   String uidString = "";
   for (byte i = 0; i < rfid.uid.size; i++) {
     uidString += String(rfid.uid.uidByte[i], HEX);
   }
   sensorData.lastRFID = uidString;
   
-  if (memcmp(rfid.uid.uidByte, authorizedUID, 4) == 0) {
-    isServoOpen = !isServoOpen;
-    sensorData.servoOpen = isServoOpen;
+  Serial.print("Scanned UID: ");
+  dump_byte_array(currentUID, 4);
+
+  // Check for Authorization
+  if (compareUID(currentUID, AUTHORIZED_UID, 4)) {
+    Serial.println("✅ Access Granted: Authorized Tag!");
     
-    if (isServoOpen) {
-      servo.write(OPEN_ANGLE);
-      Serial.println("✅ Access Granted -> Servo OPEN");
+    // Toggle the lock state
+    if (isLocked) {
+      Serial.println("   --> UNLOCKING servo...");
+      servo.write(UNLOCKED_POS); 
+      isLocked = false;
+      sensorData.servoLocked = false;
       blinkLED(2);
     } else {
-      servo.write(CLOSED_ANGLE);
-      Serial.println("✅ Access Granted -> Servo CLOSED");
+      Serial.println("   --> LOCKING servo...");
+      servo.write(LOCKED_POS); 
+      isLocked = true;
+      sensorData.servoLocked = true;
       blinkLED(1);
     }
-    delay(1000); 
   } else {
-    Serial.println("❌ Unauthorized Tag: " + uidString);
-    triggerBuzzer(100);
+    Serial.println("❌ Access Denied: Unauthorized Tag!");
+    // Quick beep for denied access
+    digitalWrite(BUZZER_PIN, HIGH);
     delay(100);
-    triggerBuzzer(100);
+    digitalWrite(BUZZER_PIN, LOW);
+    delay(100);
+    digitalWrite(BUZZER_PIN, HIGH);
+    delay(100);
+    digitalWrite(BUZZER_PIN, LOW);
   }
-  
+
+  // Cleanup
   rfid.PICC_HaltA();
   rfid.PCD_StopCrypto1();
+  delay(500); 
+}
+
+// Helper function to print a byte array (UID)
+void dump_byte_array(byte *buffer, byte bufferSize) {
+  for (byte i = 0; i < bufferSize; i++) {
+    Serial.print(buffer[i] < 0x10 ? " 0" : " ");
+    Serial.print(buffer[i], HEX);
+  }
+  Serial.println();
+}
+
+// Helper function to compare two byte arrays (UIDs)
+bool compareUID(byte *uid1, const byte *uid2, byte size) {
+  for (byte i = 0; i < size; i++) {
+    if (uid1[i] != uid2[i]) {
+      return false;
+    }
+  }
+  return true;
 }
 
 // ========================================
 // HELPER FUNCTIONS
 // ========================================
 void updateCriticalAlarmState() {
+  // Turns off the buzzer after the duration if it was active
   if (isCriticalAlarmActive && (millis() - alarmStartTime >= CRITICAL_ALARM_DURATION_MS)) {
     digitalWrite(BUZZER_PIN, LOW);
     digitalWrite(LED_PIN, LOW);
     isCriticalAlarmActive = false;
-    Serial.println("Alarm OFF");
+    Serial.println("Alarm OFF: Cycle finished.");
   }
-}
-
-void triggerDoubleBeep() {
-  if (isCriticalAlarmActive) return; 
-  
-  digitalWrite(BUZZER_PIN, HIGH); 
-  digitalWrite(LED_PIN, HIGH);
-  delay(150); 
-  digitalWrite(BUZZER_PIN, LOW); 
-  digitalWrite(LED_PIN, LOW);
-  delay(100); 
-  digitalWrite(BUZZER_PIN, HIGH); 
-  digitalWrite(LED_PIN, HIGH);
-  delay(150);
-  digitalWrite(BUZZER_PIN, LOW);
-  digitalWrite(LED_PIN, LOW);
-}
-
-void triggerBuzzer(int durationMs) {
-  digitalWrite(BUZZER_PIN, HIGH);
-  delay(durationMs);
-  digitalWrite(BUZZER_PIN, LOW);
 }
 
 void blinkLED(int times) {
@@ -569,5 +569,5 @@ void calibrateMPU() {
   baseAx = a.acceleration.x;
   baseAy = a.acceleration.y;
   baseAz = a.acceleration.z;
-  Serial.println("Done");
+  Serial.println(" Done.");
 }

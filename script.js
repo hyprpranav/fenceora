@@ -1572,4 +1572,64 @@ window.addEventListener('load', function() {
   }, 500);
 });
 
+// ============================
+// Copy Code Button Functionality
+// ============================
+document.addEventListener('DOMContentLoaded', function() {
+  const copyButtons = document.querySelectorAll('.copy-code-btn');
+  
+  copyButtons.forEach(button => {
+    button.addEventListener('click', function() {
+      // Find the code block within the same parent
+      const codeBlock = this.parentElement.querySelector('code');
+      
+      if (codeBlock) {
+        // Get the text content
+        const codeText = codeBlock.textContent;
+        
+        // Copy to clipboard
+        navigator.clipboard.writeText(codeText).then(() => {
+          // Success feedback
+          const originalHTML = this.innerHTML;
+          this.innerHTML = '<i class="fas fa-check"></i> Copied!';
+          this.classList.add('copied');
+          
+          // Reset button after 2 seconds
+          setTimeout(() => {
+            this.innerHTML = originalHTML;
+            this.classList.remove('copied');
+          }, 2000);
+        }).catch(err => {
+          console.error('Failed to copy code:', err);
+          // Fallback for older browsers
+          const textArea = document.createElement('textarea');
+          textArea.value = codeText;
+          textArea.style.position = 'fixed';
+          textArea.style.left = '-999999px';
+          document.body.appendChild(textArea);
+          textArea.select();
+          
+          try {
+            document.execCommand('copy');
+            const originalHTML = this.innerHTML;
+            this.innerHTML = '<i class="fas fa-check"></i> Copied!';
+            this.classList.add('copied');
+            
+            setTimeout(() => {
+              this.innerHTML = originalHTML;
+              this.classList.remove('copied');
+            }, 2000);
+          } catch (err) {
+            console.error('Fallback copy failed:', err);
+            alert('Failed to copy code. Please select and copy manually.');
+          }
+          
+          document.body.removeChild(textArea);
+        });
+      }
+    });
+  });
+});
+
+
 
