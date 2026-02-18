@@ -411,7 +411,7 @@
           <button class="tab-btn active" data-tab="about">About FENCEORA</button>
           <button class="tab-btn" data-tab="help">Help & Guidance</button>
           <button class="tab-btn" data-tab="code">Code</button>
-          <button class="tab-btn" data-tab="scilab">Scilab Experiments</button>
+          <button class="tab-btn" data-tab="scilab">MATLAB Experiments</button>
         </div>
 
         <div id="about-tab" class="tab-content active">
@@ -834,306 +834,423 @@ void loop() {
 
         <!-- ========== SCILAB EXPERIMENTS TAB - TEMPORARY SECTION (CAN BE REMOVED EASILY) ========== -->
         <div id="scilab-tab" class="tab-content">
-          <h3>Scilab Mathematical Experiments</h3>
+          <h3>MATLAB Signal Processing Experiments</h3>
           <p class="scilab-warning">
-            <i class="fas fa-exclamation-triangle"></i> Note: This section contains experimental mathematical codes and can be removed when not needed.
+            <i class="fas fa-exclamation-triangle"></i> Note: This section contains signal processing & filter design codes and can be removed when not needed.
           </p>
 
           <!-- Experiment 1 -->
           <div class="code-section">
-            <h4><i class="fas fa-wave-square"></i> Experiment 1: Fourier Series (Linear Function)</h4>
+            <h4><i class="fas fa-signal"></i> Experiment 1: Basic Signals (Impulse, Step, Ramp, Exponential, Sine, Cosine)</h4>
             <div class="code-block">
               <button class="copy-code-btn" title="Copy code"><i class="fas fa-copy"></i> Copy</button>
-              <pre><code>//Caption: Fourier Series
-clear;
-clc;
-//Function for Fourier Series
-funcprot(0);
-function [a0, A, B]=fourierplot(l, n, f)
- clf();
- a0=1/l*intg(0,2*l,f,0.000000001);
- for i=1:n
- function b=f1(x, f)
- b=f(x)*cos(i*%pi*x/l);
- endfunction
- function c=f2(x, f)
- c=f(x)*sin(i*%pi*x/l);
- endfunction
- A(i)=1/l*intg(0,2*l,f1,0.000000001);
- B(i)=1/l*intg(0,2*l,f2,0.000000001);
- end
- function series=solution(x)
- series=a0/2;
- for i=1:n
- series=series+A(i)*cos(i*%pi*x/l)+B(i)*sin(i*%pi*x/l);
- end
- endfunction
- x=-10*1:0.1:10*1;
- plot(x,solution(x));
-endfunction
-//Main Program
-deff('a=f(x)','a=x');
-[a0,A,B]=fourierplot(%pi,100,f)
-//result</code></pre>
+              <pre><code>clc;
+clear all;
+% UNIT IMPULSE SIGNAL%
+n=input('enter the unit impulse signal length:');
+t=-n:1:n;
+y=[zeros(1,n),ones(1,1),zeros(1,n)];
+subplot(2,3,1);
+stem(t,y);
+xlabel('n-->');
+ylabel('Amplitude-->');
+title('UNIT IMPULSE SIGNAL');
+
+% UNIT STEP SIGNAL%
+n1=input('enter the unit step signal length:');
+t=-n1:1:n1;
+y=[zeros(1,n1),ones(1,1),ones(1,n1)];
+subplot(2,3,2);
+stem(t,y);
+xlabel('n-->');
+ylabel('Amplitude-->');
+title('UNIT STEP SIGNAL');
+
+% UNIT RAMP SIGNAL%
+n2=input('enter the unit ramp signal length:');
+t=0:1:n2;
+y=t;
+subplot(2,3,3);
+stem(t,y);
+xlabel('n-->');
+ylabel('Amplitude-->');
+title('UNIT RAMP SIGNAL');
+
+% EXPONENTIAL WAVE %
+n3=input('enter the Exponential signal length:');
+t=0:1:n3;
+y=exp(0.5*t);
+subplot(2,3,4);
+stem(t,y);
+xlabel('n-->');
+ylabel('Amplitude-->');
+title('EXPONENTIAL SIGNAL'); 
+
+% SINE WAVE %
+t=0:0.01:pi;
+f=2;
+x=sin(2*pi*f*t);
+subplot(2,3,5);
+plot(t,x);
+xlabel('n-->');
+ylabel('Amplitude-->');
+title('SINE WAVE'); 
+
+% COSINE WAVE %
+t=0:0.01:pi;
+f=2;
+x=cos(2*pi*f*t);
+subplot(2,3,6);
+plot(t,x);
+xlabel('n-->');
+ylabel('Amplitude-->');
+title('COSINE WAVE')</code></pre>
             </div>
           </div>
 
           <!-- Experiment 2 -->
           <div class="code-section">
-            <h4><i class="fas fa-wave-square"></i> Experiment 2: Fourier Series (Exponential Function)</h4>
+            <h4><i class="fas fa-chart-area"></i> Experiment 2: Discrete Fourier Transform (DFT)</h4>
             <div class="code-block">
               <button class="copy-code-btn" title="Copy code"><i class="fas fa-copy"></i> Copy</button>
-              <pre><code>//Caption: Fourier Series
-clear;
-clc;
-//function for Fourier Series
-funcprot(0);
-function [a0, A, B]= fourierplot(l, n, f)
- clf();
- a0=1/l*intg(-1,1,f,0.00000001);
- for i=1:n
- function b=f1(x,f)
- b=f(x)*cos(i*%pi*x/l);
- endfunction
- function c=f2(x,f)
- c=f(x)*sin(i*%pi*x/l);
- endfunction
- A(i)=1/l*intg(-1,1,f1,0.00000001);
- B(i)=1/l*intg(-1,1,f2,0.00000001);
- end
- function series=solution(x)
- series=a0/2;
- for i=1:n
- series=series+A(i)*cos(i*%pi*x/l)+B(i)*sin(i*%pi*x/l);
- end
- endfunction
- x=-.5*1:0.1:5*1;
- plot(x,solution(x));
-endfunction
-//Main Program
-deff('a=f(x)','a=exp(-x)');
-[a0,A,B]=fourierplot(2,100,f)
-//result</code></pre>
+              <pre><code>clc;
+clear all;
+close all;
+
+x=input('enter the input x=');
+N=input('enter the order of dft N=');
+k=0:1:N-1;
+
+disp('Input Sequence x=');
+disp(x);
+
+XK=fft(x,N);
+disp('XK=');
+disp(XK);
+
+R=real(XK);
+disp('Real part=');
+disp(R);
+
+I=imag(XK);
+disp('Imaginary part=');
+disp(I);
+
+mag=abs(XK);
+disp('Magnitude=');
+disp(mag);
+
+ang=angle(XK);
+disp('Angle=');
+disp(ang);
+
+xn=ifft(XK,N);
+disp('IDFT xn=');
+disp(xn);
+
+figure(1);
+subplot(2,1,1);
+stem(x);
+xlabel('time -->');
+ylabel('Amplitude -->');
+title('Given sequence');
+
+subplot(2,1,2);
+stem(R,'r*');
+hold on;
+stem(I);
+legend('Real Part','Imaginary Part');
+xlabel('time -->');
+ylabel('Amplitude -->');
+title('Discrete Fourier Transform')
+
+figure(3);
+subplot(2,2,1);
+stem(k,mag);
+xlabel('time -->');
+ylabel('x(k) --->');
+title('Magnitude response');
+
+subplot(2,2,2);
+stem(k,ang);
+xlabel('time -->');
+ylabel('ang x(k) --->');
+title('Phase response');
+
+subplot(2,2,3);
+stem(k,xn);
+xlabel('time -->');
+ylabel('x(n)');
+title('Inverse Discrete Fourier transform');
+
+Fs=[10];
+xdft = XK(1:N/2+1);
+psdx = (1/(Fs*N)) * abs(xdft).^2;
+psdx(2:end-1) = 2*psdx(2:end-1);
+freq = 0:Fs/N:Fs/2;
+
+subplot(2,2,4);
+plot(freq,psdx);
+grid on;
+xlabel('hz -->');
+ylabel('db');
+title('Spectrum analysis DFT');
+
+disp('Spectrum analysis DFT=');
+disp(psdx);</code></pre>
             </div>
           </div>
 
           <!-- Experiment 3 -->
           <div class="code-section">
-            <h4><i class="fas fa-bezier-curve"></i> Experiment 3: Fourier Transform (Exponential)</h4>
+            <h4><i class="fas fa-sync-alt"></i> Experiment 3: Fast Fourier Transform (FFT)</h4>
             <div class="code-block">
               <button class="copy-code-btn" title="Copy code"><i class="fas fa-copy"></i> Copy</button>
-              <pre><code>//Caption: Fourier Transform
-clear;
-clc;
-//function for Fourier Transform
-funcprot(0);
-function FT= fouriertransform(a, b, s, f)
- function F=f1(x,f)
- F=f(x)*exp(sqrt(-1)*s*x);
- endfunction
- FT=(1/sqrt(2*%pi))*intg(a,b,f1,.00000001);
- disp('Fourier Transform =',FT)
- //x=a:0.1:b;
-endfunction
-//main program
-deff('a=f(x)', 'a=exp(x)');
-FT=fouriertransform(1,2,100,f)
-//Here s=100 radians, lower limit a=1, upper limit b=2</code></pre>
+              <pre><code>clc;
+clearall;
+
+x=input('Enter the sequence :'); 
+n=length(x);
+
+y=fft(x,n);
+invy=ifft(y)
+disp('output sequence is:'); 
+disp(y);
+
+m=abs(y);
+disp('magnitude function is:');
+disp(m);
+
+p=angle(y);
+disp('Phase function is:');
+disp(p);
+
+disp('Inverse FFT is:');
+disp(invy);
+
+subplot(2,2,1);
+t1=0:n-1;
+stem(t1,x);
+xlabel('n-->');
+ylabel('amplitude -->'); 
+title('Output sequence');
+
+subplot(2,2,2);
+t2=0:n-1;
+stem(t2,y);
+xlabel('n-->');
+ylabel('amplitude -->'); 
+title('Input sequence');
+
+subplot(2,2,3);
+t3=0:n-1;
+stem(t3,m);
+xlabel('n-->');
+ylabel('amplitude -->');
+title('magnitude plot');
+
+subplot(2,2,4);
+t4=0:n-1;
+stem(t4,p); 
+xlabel('n-->');
+ylabel('phase -->');
+title('phase plot');</code></pre>
             </div>
           </div>
 
           <!-- Experiment 4 -->
           <div class="code-section">
-            <h4><i class="fas fa-bezier-curve"></i> Experiment 4: Fourier Transform (Cosine)</h4>
+            <h4><i class="fas fa-filter"></i> Experiment 4: IIR Butterworth Filter (LPF/HPF)</h4>
             <div class="code-block">
               <button class="copy-code-btn" title="Copy code"><i class="fas fa-copy"></i> Copy</button>
-              <pre><code>//Caption: Fourier Transform
-clear;
-clc;
-//function for Fourier Transform
-funcprot(0);
-function FT=fouriertransform(a, b, s, f)
- function F=f1(x, f)
- F=f(x)*exp(sqrt(-1)*s*x);
- endfunction
- FT=(1/sqrt(2*%pi))*intg(a,b,f1,.00000001);
- disp('Fourier Transform =',FT)
- //x=a:0.1:b;
-endfunction
-//main program
-deff('a=f(x)','a=cos(x)');
-FT=fouriertransform(-%pi/2,%pi/2,100,f);
-//Here s=100 radians, lower limit a=1, upper limit b=2</code></pre>
+              <pre><code>clc; 
+clear all;
+close all;
+
+wp=0.7*pi;
+ws=0.4*pi;
+rp=-20*log10(0.8);
+rs=-20*log10(0.3);
+T=1;
+
+Wp=(2/T)*tan(wp/2);
+Ws=(2/T)*tan(ws/2);
+
+[n,wn]=buttord(Wp,Ws,rp,rs,'s');
+
+c=input('enter choice of filter 1. LPF 2. HPF \n ');
+
+if(c==1)
+[b,a]=butter(n,wn,'low','s');
+end
+
+if(c==2)
+[b,a]=butter(n,wn,'high','s');
+end
+
+w=0:.01:pi;
+[h,om]=freqs(b,a,w);
+m=20*log10(abs(h));
+an=angle(h);
+
+figure,
+subplot(2,1,1);
+plot(om/pi,m);
+title('magnitude response of IIR filter is:');
+xlabel('(a) Normalized freq. -->');
+ylabel('Gain in dB-->');
+
+subplot(2,1,2);
+plot(om/pi,an);
+title('phase response of IIR filter is:');
+xlabel('(b) Normalized freq. -->');
+ylabel('Phase in radians-->');</code></pre>
             </div>
           </div>
 
           <!-- Experiment 5 -->
           <div class="code-section">
-            <h4><i class="fas fa-water"></i> Experiment 5: One Dimensional Wave Equation</h4>
+            <h4><i class="fas fa-wave-square"></i> Experiment 5: IIR Chebyshev Filter (LPF/HPF)</h4>
             <div class="code-block">
               <button class="copy-code-btn" title="Copy code"><i class="fas fa-copy"></i> Copy</button>
-              <pre><code>//One Dimensional Wave Equation
-clear;
-clc;
-n=1:2:100;
-l=5;//distance =5
-x = 3; //in between 0 to l
-k = 2; //spring constant
-t = 0.5;//t=0.5 seconds
-a=1;//constant =1
-sinx = sin(n*%pi*x/l);
-cosx = cos(n*%pi*a*t/l);
-I = sinx.*cosx;
-N = n.^3;
-I = I./N
-z = sum(I);
-y =((8*k*(l^2))/(%pi^3))*z //Final Solution
-disp("Solution of one dimensional wave equation is : y(3,0.5)=",y)</code></pre>
+              <pre><code>clc;
+clear all;
+close all;
+
+rp=input('enter the passband ripple');
+rs=input('enter the stopband ripple');
+wp=input('enter the passband freq');
+ws=input('enter the stopband freq');
+fs=input('enter the sampling freq');
+
+w1=2*wp/fs;
+w2=2*ws/fs;
+
+[n,wn]=cheb1ord(w1,w2,rp,rs,'s');
+
+c=input('enter choice of filter 1. LPF 2. HPF \n ');
+
+if(c==1)
+[b,a]=cheby1(n,rp,wn,'low','s');
+end
+
+if(c==2)
+[b,a]=cheby1(n,rp,wn,'high','s');
+end
+
+w=0:.01:pi;
+[h,om]=freqs(b,a,w);
+m=20*log10(abs(h));
+an=angle(h);
+
+figure,
+subplot(2,1,1);
+plot(om/pi,m);
+title('magnitude response of IIR filter is:');
+xlabel('(a) Normalized freq. -->');
+ylabel('Gain in dB-->');
+
+subplot(2,1,2);
+plot(om/pi,an);
+title('phase response of IIR filter is:');
+xlabel('(b) Normalized freq. -->');
+ylabel('Phase in radians-->');</code></pre>
             </div>
           </div>
 
           <!-- Experiment 6 -->
           <div class="code-section">
-            <h4><i class="fas fa-thermometer-half"></i> Experiment 6: One Dimensional Heat Equation</h4>
+            <h4><i class="fas fa-sliders-h"></i> Experiment 6: IIR Chebyshev Filter (BPF/BSF)</h4>
             <div class="code-block">
               <button class="copy-code-btn" title="Copy code"><i class="fas fa-copy"></i> Copy</button>
-              <pre><code>//One Dimensional Heat Equation
-clear;
-clc;
-l=5;//length of the rod=5
-x=3;//in between 0 to 5
-t=0.5;//time=0.5 seconds
-alpha=1;//constant=1
-//cosx=cos(n*%pi*x/l);
-//expt=-(alpha^2)*(n^2)*(%pi^2)*t/(l^2);
-//temp=-4*(l^2)/((%pi^3))
-u=(l^2)/6;
-for n=2:2:100
- u=u+(-4*(l^2)/((%pi^2)*(n^2)))*cos(n*%pi*x/l)*exp(-(alpha^2)*(n^2)*(%pi^2)*t/(l^2));
+              <pre><code>clc;
+clear all;
+close all;
+
+disp('Enter the IIR filter design specifications');
+
+rp = input('Enter the passband ripple (in dB): ');
+rs = input('Enter the stopband ripple (in dB): ');
+wp = input('Enter the passband frequency (Hz): ');
+ws = input('Enter the stopband frequency (Hz): ');
+fs = input('Enter the sampling frequency (Hz): ');
+
+w1 = 2 * wp / fs;
+w2 = 2 * ws / fs;
+
+[n, wn] = cheb1ord(w1, w2, rp, rs, 's');
+
+c = input('Enter choice of filter: 1. BPF 2. BSF\n');
+
+if c == 1
+[b_lp, a_lp] = cheby1(n, rp, wn, 'low', 's');
+W0 = sqrt(w1 * w2);
+Bw = w2 - w1;
+[b, a] = lp2bp(b_lp, a_lp, W0, Bw);
 end
-disp('One Dimensional Heat Equation Final Solution u(3,0.5)=',u)</code></pre>
+
+if c == 2
+wn = [w1 w2];
+[b, a] = cheby1(n, rp, wn, 'stop', 's');
+end
+
+w = 0:0.01:pi;
+[h, om] = freqs(b, a, w);
+m = 20 * log10(abs(h));
+an = angle(h);
+
+figure;
+subplot(2, 1, 1);
+plot(om/pi, m);
+title('Magnitude Response of IIR Filter');
+xlabel('(a) Normalized Frequency');
+ylabel('Gain (dB)');
+grid on;
+
+subplot(2, 1, 2);
+plot(om/pi, an);
+title('Phase Response of IIR Filter');
+xlabel('(b) Normalized Frequency');
+ylabel('Phase (radians)');
+grid on;</code></pre>
             </div>
           </div>
 
           <!-- Experiment 7 -->
           <div class="code-section">
-            <h4><i class="fas fa-function"></i> Experiment 7: Z-Transform of Finite Discrete Sequence</h4>
+            <h4><i class="fas fa-project-diagram"></i> Experiment 7: Chebyshev BPF/BSF (Digital Filter)</h4>
             <div class="code-block">
               <button class="copy-code-btn" title="Copy code"><i class="fas fa-copy"></i> Copy</button>
-              <pre><code>//caption: Find the z-transform of a finite discrete sequence
-clear all;
-clc;
-x=[1,0,3,-1,2]
-//input discrete sequence
-z=poly(0,'z');
-disp('z-transform of a finite discrete sequence X(z)=')
-for n=0:length(x)-1
- XZ(n+1)=x(n+1)*(1/z)^n;
- disp(XZ(n+1))
-end
-//result</code></pre>
-            </div>
-          </div>
+              <pre><code>rp=input('enter the passband ripple');
+rs=input('enter the stopband ripple');
+wp=input('enter the passband frequency');
+ws=input('enter the stopband frequency');
+fs=input('enter the sampling frequency');
 
-          <!-- Experiment 8 -->
-          <div class="code-section">
-            <h4><i class="fas fa-divide"></i> Experiment 8: Partial Fraction Decomposition</h4>
-            <div class="code-block">
-              <button class="copy-code-btn" title="Copy code"><i class="fas fa-copy"></i> Copy</button>
-              <pre><code>//Caption: Program to perform partial fraction
-clear;
-clc;
-z = poly(0,'z');
-X = pfss(1/(1-3.5*z^-1+3*z^-2));
-XZ1 = syslin('d',X(1))
-XZ2 = syslin('d',X(2))
-disp("Partial Fraction Result is")
-disp('X1(z)=',XZ1)
-disp('X2(z)=',XZ2)</code></pre>
-            </div>
-          </div>
+w1=2*wp/fs;
+w2=2*ws/fs;
 
-          <!-- Experiment 9a -->
-          <div class="code-section">
-            <h4><i class="fas fa-dice"></i> Experiment 9a: Binomial Distribution</h4>
-            <div class="code-block">
-              <button class="copy-code-btn" title="Copy code"><i class="fas fa-copy"></i> Copy</button>
-              <pre><code>//Binomial Distribution
-//first example
-clear;
-clc;
-n=6//6dices
-p=1/3;//probability of getting 5 or 6 p=2/6=1/3
-pr_k=binomial(p,n)
-disp(binomial(p,n))
-disp("Probability of getting 3 dice to show 5 or 6",sum(pr_k(4:7)))
-//6 dices thrown729 times
-n1=729
-pr_3=n1*sum(pr_k(4:7))
-disp("Atleast 3 dice to show 5 or 6",pr_3)
-//Result</code></pre>
-            </div>
-          </div>
+[n,wn]=cheb1ord(w1,w2,rp,rs);
 
-          <!-- Experiment 9b -->
-          <div class="code-section">
-            <h4><i class="fas fa-chart-line"></i> Experiment 9b: Poisson Distribution</h4>
-            <div class="code-block">
-              <button class="copy-code-btn" title="Copy code"><i class="fas fa-copy"></i> Copy</button>
-              <pre><code>//Poisson Distribution
-clear;
-clc;
-Mean_Lambda = input("Enter Mean value");
-//case 1: Exactly 2 messages arrive within 1 hour
-x =2;
-Px = exp(-Mean_Lambda)*((Mean_Lambda)^x)/factorial(x);
-disp('Probability of exactly 2 messages arrive=',Px);
-//case 2: no messages arrive x=0
-x=0;
-Px = exp(-Mean_Lambda)*((Mean_Lambda)^x)/factorial(x);
-disp('Probability of no messages arrive=',Px);
-//Probability of atleast 3 messages arrive in 1 hour
-Px3=0
-for x=0:2
- Px3 = Px3+exp(-Mean_Lambda)*((Mean_Lambda)^x)/factorial(x);
-end
-Px = 1-Px3
-disp('Probability of atleast 3 messages arrive in 1 hour',Px)</code></pre>
-            </div>
-          </div>
+wn1=[w1,w2];
+[b,a]=cheby1(n,rp,wn1);
 
-          <!-- Experiment 10 -->
-          <div class="code-section">
-            <h4><i class="fas fa-bell-curve"></i> Experiment 10: Normal Distribution</h4>
-            <div class="code-block">
-              <button class="copy-code-btn" title="Copy code"><i class="fas fa-copy"></i> Copy</button>
-              <pre><code>//Normal Distribution
-clear;
-clc;
-X=834
-Mean = 800
-Std = 40
-//Case 1 Probability that a bulb burns more than 834 hours
-[P,Q]=cdfnor("PQ",X,Mean,Std);
-//P = probability that a bulb less than 834 hours
-//Q = Probability that a bulb more than 834 hours
-disp("probability that a bulb less than 834 hours",P)
-disp("Probability that a bulb more than 834 hours",Q)
-//Case 2 probility that bulb burns between 778 and 834 hours
-//P[778<X<834]
-X1=778
-X2=834
-[P1,Q1]=cdfnor("PQ",X1,Mean,Std)
-[P2,Q2]=cdfnor("PQ",X2,Mean,Std)
-//P1=probability that a bulb less than 778
-//Q1=robability that a bulb burns more than 778
-//P2 = robability that a bulb burns less than 834
-//Q2 = robability that a bulb burns more than 834
-P = (0.5-P1)+(P2-0.5)
-disp("P[0<Z<778]",0.5-P1)
-disp("P[0<Z<834]",P2-0.5)
-disp("probility that bulb burns between 778 and 834 hours",P)
-//Result</code></pre>
+[H,w]=freqz(b,a,512);
+subplot(1,2,1);
+plot(w,abs(H));
+xlabel('normalised frequency');
+ylabel('abs(H)');
+title('BPF')
+
+wn2= [w1, w2];
+[b,a]=cheby1(n,rp,wn2,'stop');
+
+[H,w]=freqz(b,a,512);
+subplot(1,2,2);
+plot(w,abs(H));
+xlabel('normalised frequency');
+ylabel('abs(H)');
+title('BSF')</code></pre>
             </div>
           </div>
 
@@ -1142,13 +1259,13 @@ disp("probility that bulb burns between 778 and 834 hours",P)
               <i class="fas fa-info-circle"></i> About These Experiments
             </h4>
             <p class="info-text">
-              These Scilab codes demonstrate various mathematical concepts including:
+              These MATLAB/Octave codes demonstrate various signal processing concepts including:
             </p>
             <ul class="info-list">
-              <li>Fourier Series & Transform analysis</li>
-              <li>Wave & Heat equation solutions</li>
-              <li>Z-Transform & Signal processing</li>
-              <li>Statistical distributions (Binomial, Poisson, Normal)</li>
+              <li>Basic Signal Generation (Impulse, Step, Ramp, Exponential, Sine, Cosine)</li>
+              <li>DFT & FFT (Discrete & Fast Fourier Transform)</li>
+              <li>IIR Filter Design (Butterworth & Chebyshev)</li>
+              <li>Digital Filter Implementation (LPF, HPF, BPF, BSF)</li>
             </ul>
             <p class="info-note">
               <strong>Note:</strong> This entire "Scilab Experiments" tab can be easily removed when no longer needed by simply deleting the tab button and tab content section.
