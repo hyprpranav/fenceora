@@ -437,10 +437,10 @@
   }
 }
 
-/* Container Hidden During Loading */
+/* Container Visible Immediately (Loading Animation Disabled) */
 #mainContainer {
-  opacity: 0;
-  transform: translateY(30px);
+  opacity: 1;
+  transform: translateY(0);
   transition: opacity 1s ease-out, transform 1s ease-out;
 }
 

@@ -1,7 +1,8 @@
 // ============================
-// Electric Spark Loading Animation Control
+// Electric Spark Loading Animation Control (DISABLED)
 // ============================
 
+/*
 window.addEventListener('load', () => {
   const loadingScreen = document.getElementById('loadingScreen');
   const mainContainer = document.getElementById('mainContainer');
@@ -99,6 +100,7 @@ window.addEventListener('load', () => {
     loadingPercentage.textContent = `${Math.floor(progress)}%`;
   }, intervalTime);
 });
+*/
 
 // ============================
 // Global Variables and Chart Setup
